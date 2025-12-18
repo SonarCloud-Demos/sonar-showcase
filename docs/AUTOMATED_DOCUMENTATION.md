@@ -1,0 +1,264 @@
+# Automated Documentation Generation
+
+**Date:** January 2025  
+**Status:** ✅ Configured
+
+---
+
+## Overview
+
+Documentation is now automatically generated during the Maven build process:
+
+- **JavaDoc** (Backend) - Generated during `prepare-package` phase
+- **TypeDoc** (Frontend) - Generated during `generate-resources` phase
+
+Both documentation sets are created automatically when you run `mvn clean install` or `mvn package`.
+
+---
+
+## How It Works
+
+### Backend - JavaDoc
+
+**Configuration:** `backend/pom.xml`
+
+JavaDoc is generated automatically during the `prepare-package` phase:
+
+```xml
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-javadoc-plugin</artifactId>
+    <executions>
+        <execution>
+            <id>generate-javadoc</id>
+            <phase>prepare-package</phase>
+            <goals>
+                <goal>javadoc</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+```
+
+**Output Location:** `backend/target/site/apidocs/`
+
+### Frontend - TypeDoc
+
+**Configuration:** `frontend/pom.xml`
+
+TypeDoc is generated automatically during the `generate-resources` phase using the frontend-maven-plugin:
+
+```xml
+<execution>
+    <id>npm-docs</id>
+    <goals>
+        <goal>npm</goal>
+    </goals>
+    <phase>generate-resources</phase>
+    <configuration>
+        <arguments>run docs</arguments>
+    </configuration>
+</execution>
+```
+
+**Output Location:** `frontend/target/site/typedoc/`
+
+---
+
+## Build Commands
+
+### Full Build (with documentation)
+
+```bash
+# From project root
+mvn clean install
+```
+
+This will:
+1. Build frontend (including TypeDoc generation)
+2. Build backend (including JavaDoc generation)
+3. Package everything into JARs
+
+### Build Without Tests
+
+```bash
+mvn clean install -DskipTests
+```
+
+### Generate Documentation Only
+
+**Backend JavaDoc:**
+```bash
+cd backend
+mvn javadoc:javadoc
+```
+
+**Frontend TypeDoc:**
+```bash
+cd frontend
+npm run docs
+```
+
+---
+
+## Documentation Output Locations
+
+### Backend JavaDoc
+- **Location:** `backend/target/site/apidocs/`
+- **Index:** `backend/target/site/apidocs/index.html`
+- **Generated during:** `prepare-package` phase
+
+### Frontend TypeDoc
+- **Location:** `frontend/target/site/typedoc/`
+- **Index:** `frontend/target/site/typedoc/index.html`
+- **Generated during:** `generate-resources` phase
+
+---
+
+## Maven Site Integration
+
+Both documentation sets are placed in `target/site/` directories, making them compatible with Maven Site plugin if you want to generate a combined documentation site:
+
+```bash
+mvn site
+```
+
+This would generate a Maven site with links to both JavaDoc and TypeDoc.
+
+---
+
+## Build Lifecycle Integration
+
+### Frontend Build Order
+1. `generate-resources` phase:
+   - Install Node.js and npm
+   - Install npm dependencies
+   - **Generate TypeDoc** ← Documentation generated here
+   - Build React application
+
+### Backend Build Order
+1. `compile` phase: Compile Java sources
+2. `test` phase: Run tests
+3. `prepare-package` phase:
+   - **Generate JavaDoc** ← Documentation generated here
+4. `package` phase: Create JAR
+
+---
+
+## Verification
+
+After running `mvn clean install`, verify documentation was generated:
+
+```bash
+# Check JavaDoc
+ls -la backend/target/site/apidocs/
+
+# Check TypeDoc
+ls -la frontend/target/site/typedoc/
+```
+
+---
+
+## CI/CD Integration
+
+In CI/CD pipelines, documentation will be automatically generated during the build. You can:
+
+1. **Archive documentation** as build artifacts
+2. **Publish to documentation server** (e.g., GitHub Pages, internal docs server)
+3. **Include in deployment packages**
+
+Example CI step to archive docs:
+```yaml
+- name: Archive documentation
+  uses: actions/upload-artifact@v3
+  with:
+    name: documentation
+    path: |
+      backend/target/site/apidocs/
+      frontend/target/site/typedoc/
+```
+
+---
+
+## Troubleshooting
+
+### TypeDoc not generated
+
+**Check:** Ensure npm dependencies are installed:
+```bash
+cd frontend
+npm install
+```
+
+**Verify:** Check that `typedoc` is in `package.json` devDependencies.
+
+### JavaDoc not generated
+
+**Check:** Ensure all Java sources compile successfully:
+```bash
+cd backend
+mvn compile
+```
+
+**Verify:** Check that `maven-javadoc-plugin` is configured in `backend/pom.xml`.
+
+### Build fails during documentation generation
+
+**Solution:** You can skip documentation generation if needed:
+```bash
+# Skip JavaDoc
+mvn clean install -Dmaven.javadoc.skip=true
+
+# Skip TypeDoc (skip frontend build)
+mvn clean install -pl backend
+```
+
+---
+
+## Customization
+
+### Change JavaDoc Output Location
+
+Edit `backend/pom.xml`:
+```xml
+<configuration>
+    <outputDirectory>${project.build.directory}/docs/javadoc</outputDirectory>
+</configuration>
+```
+
+### Change TypeDoc Output Location
+
+Edit `frontend/typedoc.json`:
+```json
+{
+  "out": "target/site/typedoc"
+}
+```
+
+### Change Build Phase
+
+You can change when documentation is generated by modifying the `<phase>` element in the plugin configuration.
+
+---
+
+## Best Practices
+
+1. **Commit generated docs?** 
+   - Generally, don't commit generated documentation to version control
+   - Generate on-demand or in CI/CD
+   - Add `target/` and `docs/typedoc/` to `.gitignore` if not already there
+
+2. **Documentation Quality**
+   - Add JSDoc comments to TypeScript files
+   - Add JavaDoc comments to Java files
+   - Keep documentation up-to-date with code changes
+
+3. **Build Performance**
+   - Documentation generation adds time to builds
+   - Consider generating docs only in CI/CD, not local dev builds
+   - Use `-DskipTests` for faster iteration
+
+---
+
+*Last Updated: January 2025*
+

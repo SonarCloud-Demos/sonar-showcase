@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.sonarshowcase</groupId>
+        <artifactId>sonarshowcase-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>sonarshowcase-frontend</artifactId>
+    <packaging>jar</packaging>
+    <name>SonarShowcase Frontend</name>
+    <description>React/TypeScript frontend packaged as static resources</description>
+
+    <properties>
+        <!-- SonarQube module key - must be unique for each module -->
+        <sonar.moduleKey>${sonar.projectKey}:${project.artifactId}</sonar.moduleKey>
+        <!-- SonarQube configuration for TypeScript/JavaScript sources -->
+        <sonar.sources>src</sonar.sources>
+        <sonar.tests>test</sonar.tests>
+        <sonar.test.inclusions>**/*.test.ts,**/*.test.tsx</sonar.test.inclusions>
+        <sonar.exclusions>**/node_modules/**,**/dist/**,**/build/**,**/*.config.js,**/*.config.ts</sonar.exclusions>
+        <sonar.typescript.lcov.reportPaths>coverage/lcov.info</sonar.typescript.lcov.reportPaths>
+        <sonar.javascript.lcov.reportPaths>coverage/lcov.info</sonar.javascript.lcov.reportPaths>
+    </properties>
+
+    <build>
+        <resources>
+            <!-- Package the built frontend into static/ folder in the JAR -->
+            <resource>
+                <directory>${project.basedir}/dist</directory>
+                <targetPath>static</targetPath>
+            </resource>
+        </resources>
+
+        <plugins>
+            <!-- Frontend Maven Plugin - builds React app with Node/NPM -->
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <configuration>
+                    <workingDirectory>${project.basedir}</workingDirectory>
+                    <installDirectory>${project.build.directory}</installDirectory>
+                </configuration>
+                <executions>
+                    <!-- Install Node and NPM locally -->
+                    <execution>
+                        <id>install-node-and-npm</id>
+                        <goals>
+                            <goal>install-node-and-npm</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <nodeVersion>${node.version}</nodeVersion>
+                            <npmVersion>${npm.version}</npmVersion>
+                            <!-- Use corporate Artifactory for downloading npm binary -->
+                            <npmDownloadRoot>https://repox.jfrog.io/artifactory/npm/npm/-/</npmDownloadRoot>
+                            <!-- Reference server credentials from settings.xml -->
+                            <serverId>artifactory</serverId>
+                        </configuration>
+                    </execution>
+
+                    <!-- Install NPM dependencies -->
+                    <execution>
+                        <id>npm-install</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <arguments>install</arguments>
+                        </configuration>
+                    </execution>
+
+                    <!-- Run frontend tests -->
+                    <execution>
+                        <id>npm-test</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>test</phase>
+                        <configuration>
+                            <arguments>run test -- --run</arguments>
+                        </configuration>
+                    </execution>
+
+                    <!-- Generate test coverage for SonarCloud -->
+                    <execution>
+                        <id>npm-test-coverage</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>test</phase>
+                        <configuration>
+                            <arguments>run test:coverage -- --run</arguments>
+                        </configuration>
+                    </execution>
+
+                    <!-- Generate TypeDoc documentation (runs after directory is created) -->
+                    <execution>
+                        <id>npm-docs</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <arguments>run docs</arguments>
+                            <skip>${skip.docs}</skip>
+                        </configuration>
+                    </execution>
+
+                    <!-- Build production bundle -->
+                    <execution>
+                        <id>npm-build</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <arguments>run build</arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Ensure the dist folder is created before packaging -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <classesDirectory>${project.basedir}/dist</classesDirectory>
+                    <includes>
+                        <include>**/*</include>
+                    </includes>
+                </configuration>
+            </plugin>
+
+            <!-- Create target/site directory for TypeDoc (runs before npm-docs) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>create-typedoc-directory</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${project.build.directory}/site/typedoc"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Alternative: Use resources plugin to copy to correct location -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <id>copy-frontend-resources</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.outputDirectory}/static</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/dist</directory>
+                                    <filtering>false</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- SonarCloud Scanner -->
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
+
