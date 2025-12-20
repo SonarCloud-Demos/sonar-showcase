@@ -94,7 +94,7 @@ jobs:
           
           # Explicitly generate JavaDoc to ensure it's created
           echo "📚 Generating JavaDoc explicitly..."
-          mvn javadoc:javadoc -pl backend || (echo "⚠️  JavaDoc generation failed, continuing..." && true)
+          mvn javadoc:javadoc -pl backend
           
           # Verify JavaDoc was generated
           if [ -d "backend/target/site/apidocs" ]; then
@@ -103,13 +103,19 @@ jobs:
             ls -la backend/target/site/apidocs/ | head -10
             if [ -f "backend/target/site/apidocs/index.html" ]; then
               echo "✅ Backend index.html exists"
+              echo "   Total files in apidocs: $(find backend/target/site/apidocs -type f | wc -l)"
             else
               echo "❌ Backend index.html missing!"
+              echo "   Searching for HTML files:"
+              find backend/target/site/apidocs -name "*.html" | head -5
+              exit 1
             fi
           else
             echo "❌ ERROR: Backend JavaDoc directory not found"
             echo "   Checking backend/target structure:"
             find backend/target -type d 2>/dev/null | head -10
+            echo "   Checking if site directory exists:"
+            ls -la backend/target/site/ 2>/dev/null || echo "   site directory not found"
             exit 1
           fi
           
@@ -125,8 +131,11 @@ jobs:
           # Create a docs-site directory for GitHub Pages
           mkdir -p docs-site
           
+          # Get the build timestamp in a readable format
+          BUILD_TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          
           # Create index page that links to both documentation sets
-          cat > docs-site/index.html << 'EOF'
+          cat > docs-site/index.html << EOF
           <!DOCTYPE html>
           <html lang="en">
           <head>
@@ -218,12 +227,9 @@ jobs:
                   
                   <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #999; font-size: 0.9em;">
                       <p>📝 Documentation is automatically generated from source code during the build process.</p>
-                      <p>🔄 Last updated: <span id="date"></span></p>
+                      <p>🔄 Last updated: ${BUILD_TIMESTAMP}</p>
                   </div>
               </div>
-              <script>
-                  document.getElementById('date').textContent = new Date().toLocaleString();
-              </script>
           </body>
           </html>
           EOF
@@ -233,22 +239,30 @@ jobs:
             # Remove existing backend directory to avoid nested structures
             rm -rf docs-site/backend
             mkdir -p docs-site/backend
-            # Copy contents of apidocs into backend (not the directory itself)
-            cp -r backend/target/site/apidocs/. docs-site/backend/
+            # Copy all files and directories from apidocs to backend
+            # Using * to copy all visible files, then handle hidden files separately
+            cp -r backend/target/site/apidocs/* docs-site/backend/ 2>/dev/null || true
+            # Also copy hidden files if any
+            cp -r backend/target/site/apidocs/.[!.]* docs-site/backend/ 2>/dev/null || true
             echo "✅ Backend JavaDoc copied"
             # Verify index.html exists
             if [ -f "docs-site/backend/index.html" ]; then
               echo "✅ Backend index.html found at docs-site/backend/index.html"
+              echo "   Backend docs file count: $(find docs-site/backend -type f | wc -l) files"
             else
-              echo "⚠️  Backend index.html NOT found - listing files:"
-              ls -la docs-site/backend/ | head -10
-              echo "   Searching for index.html:"
-              find docs-site/backend -name "index.html" -type f
+              echo "❌ Backend index.html NOT found"
+              echo "   Files in docs-site/backend/:"
+              ls -la docs-site/backend/ | head -20
+              echo "   Source directory (backend/target/site/apidocs/) contents:"
+              ls -la backend/target/site/apidocs/ | head -20
+              echo "   Searching for index.html in source:"
+              find backend/target/site/apidocs -name "index.html" -type f
+              exit 1
             fi
           else
             echo "❌ ERROR: Backend JavaDoc not found at backend/target/site/apidocs"
-            echo "   Attempting to list backend/target structure:"
-            find backend/target -type d -name "*doc*" 2>/dev/null || echo "   No doc directories found"
+            echo "   Checking backend/target structure:"
+            find backend/target -type d 2>/dev/null | head -20
             exit 1
           fi
           
