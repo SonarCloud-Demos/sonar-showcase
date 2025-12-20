@@ -264,6 +264,9 @@ This project uses a **hybrid configuration approach** for SonarQube scanning:
 | GET | `/api/v1/orders/user/{userId}` | Get orders by user ID |
 | POST | `/api/v1/orders` | Create order |
 | POST | `/api/v1/orders/{id}/discount?code={code}` | Apply discount code |
+| GET | `/api/v1/activity-logs` | Get all activity logs |
+| GET | `/api/v1/activity-logs/user/{userId}` | Get activity logs by user ID |
+| POST | `/api/v1/activity-logs` | Create activity log |
 
 ### Vulnerable Endpoints (Security Demo)
 
@@ -272,6 +275,7 @@ This project uses a **hybrid configuration approach** for SonarQube scanning:
 | GET | `/api/v1/users/login?username=X&password=Y` | 🔴 SQL Injection |
 | GET | `/api/v1/users/vulnerable-search?term=X` | 🔴 SQL Injection |
 | GET | `/api/v1/users/sorted?orderBy=X` | 🔴 SQL Injection |
+| GET | `/api/v1/activity-logs/search?startDate=X&endDate=Y&userId=Z` | 🔴 SQL Injection |
 | GET | `/api/v1/files/download?filename=X` | 🔴 Path Traversal |
 | GET | `/api/v1/files/read?path=X` | 🔴 Path Traversal |
 | GET | `/api/v1/files/profile?username=X` | 🔴 Path Traversal |
@@ -306,7 +310,10 @@ curl -X POST http://localhost:8080/api/v1/users \
 | `GET /api/v1/users/login` | `username=admin'--` | Authentication bypass via SQL comment |
 | `GET /api/v1/users/vulnerable-search` | `term=' UNION SELECT...` | Data extraction via UNION injection |
 | `GET /api/v1/users/sorted` | `orderBy=username; DROP TABLE` | ORDER BY clause injection |
+| `GET /api/v1/activity-logs/search` | `startDate=2025-01-01' OR '1'='1'--` | Date range bypass via SQL injection |
+| `GET /api/v1/activity-logs/search` | `userId=1' UNION SELECT * FROM users--` | Data extraction via UNION injection |
 | `UserRepositoryCustomImpl` | Internal methods | SQL concat in findUsersBySearch, authenticateUser |
+| `ActivityLogService` | `getActivityLogsByDateRange()` | Clear source-to-sink path: HTTP params → Service → SQL |
 
 #### Path Traversal (S2083)
 | Endpoint | Attack Vector | Description |

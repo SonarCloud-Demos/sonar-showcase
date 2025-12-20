@@ -46,6 +46,15 @@ http://localhost:8080/api/v1
 - `VIP` → 25% discount
 - `EMPLOYEE` → 50% discount
 
+### Activity Logs
+
+| Method | Endpoint | Description | Security |
+|--------|----------|-------------|----------|
+| GET | `/activity-logs` | Get all activity logs | Safe |
+| GET | `/activity-logs/search?startDate={d}&endDate={d}&userId={id}` | Search by date range | 🔴 SQL Injection |
+| GET | `/activity-logs/user/{userId}` | Get logs by user ID | Safe |
+| POST | `/activity-logs` | Create activity log | ⚠️ No validation |
+
 ---
 
 ## Vulnerable Endpoints (Security Demo)
@@ -57,6 +66,7 @@ http://localhost:8080/api/v1
 | GET | `/users/login?username={u}&password={p}` | 🔴 SQL Injection | `username=admin'--` |
 | GET | `/users/vulnerable-search?term={term}` | 🔴 SQL Injection | `term=' UNION SELECT * FROM users--` |
 | GET | `/users/sorted?orderBy={col}` | 🔴 SQL Injection | `orderBy=username; DROP TABLE users;--` |
+| GET | `/activity-logs/search?startDate={d}&endDate={d}&userId={id}` | 🔴 SQL Injection | `startDate=2025-01-01' OR '1'='1'--` |
 
 ### Path Traversal
 
@@ -115,6 +125,15 @@ curl -X POST http://localhost:8080/api/v1/orders \
 ### Apply Discount
 ```bash
 curl -X POST "http://localhost:8080/api/v1/orders/1/discount?code=SUMMER2023"
+```
+
+### Search Activity Logs (Vulnerable)
+```bash
+# Normal usage
+curl "http://localhost:8080/api/v1/activity-logs/search?startDate=2025-01-01&endDate=2025-12-31"
+
+# SQL Injection attack (bypass date filter)
+curl "http://localhost:8080/api/v1/activity-logs/search?startDate=2025-01-01' OR '1'='1'--&endDate=2025-12-31"
 ```
 
 ---

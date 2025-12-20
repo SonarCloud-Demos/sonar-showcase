@@ -155,6 +155,20 @@ SonarShowcase is a **demonstration monolith application** designed to showcase S
 - `sku` (String, optional)
 - `available` (Boolean, optional)
 
+### ActivityLog Entity
+
+**Table:** `activity_logs`  
+**Required Fields:**
+- `id` (Long, auto-generated)
+- `userId` (Long, required)
+- `action` (String, required) - e.g., "LOGIN", "PROFILE_UPDATE", "ORDER_CREATE", "ADMIN_ACTION", "PASSWORD_CHANGE"
+- `details` (String, optional) - Description of the activity
+- `timestamp` (Date, required) - When the activity occurred
+- `ipAddress` (String, optional) - IP address from which the activity originated
+
+**Pre-seeded Data (MUST EXIST ON STARTUP):**
+- Sample activity logs are created for existing users with various timestamps (current date, -1 day, -2 days, -5 days, -10 days) to enable date range filtering testing
+
 ---
 
 ## API Specifications
@@ -267,6 +281,45 @@ All API endpoints are prefixed with `/api/v1`
   - Discount applied to `totalAmount`
   - **BUG:** Changes not persisted to database (intentional maintainability issue)
 
+#### Activity Logs API
+
+**GET `/api/v1/activity-logs`**
+- **Purpose:** Get all activity logs
+- **Response:** `List<ActivityLog>`
+- **Status Codes:** 200 OK
+- **Behavior:** Returns all activity logs from database
+
+**GET `/api/v1/activity-logs/search?startDate={date}&endDate={date}&userId={id}`**
+- **Purpose:** Search activity logs by date range (⚠️ SQL INJECTION VULNERABILITY)
+- **Query Parameters:** 
+  - `startDate` (String, required) - Start date for filtering
+  - `endDate` (String, required) - End date for filtering
+  - `userId` (String, optional) - User ID filter
+- **Response:** `List<ActivityLog>`
+- **Status Codes:** 200 OK, 500 if SQL error
+- **Behavior:** 
+  - User input directly concatenated into SQL query without sanitization (intentional security issue)
+  - Clear source-to-sink path: HTTP params → Controller → Service → SQL execution
+  - Attack examples:
+    - `startDate=2025-01-01' OR '1'='1'--` (bypasses date filter)
+    - `userId=1' UNION SELECT * FROM users--` (extracts user data)
+
+**GET `/api/v1/activity-logs/user/{userId}`**
+- **Purpose:** Get activity logs by user ID
+- **Path Parameters:** `userId` (Long)
+- **Response:** `List<ActivityLog>`
+- **Status Codes:** 200 OK
+- **Behavior:** Returns all activity logs for the specified user
+
+**POST `/api/v1/activity-logs`**
+- **Purpose:** Create new activity log entry
+- **Request Body:** `ActivityLog {userId, action, details?, timestamp?, ipAddress?}`
+- **Response:** `ActivityLog`
+- **Status Codes:** 200 OK
+- **Business Rules:**
+  - If `timestamp` is null, auto-sets to current date/time
+  - No validation (intentional maintainability issue)
+
 ### Vulnerable Endpoints (Security Demo)
 
 These endpoints **MUST REMAIN VULNERABLE** for educational purposes:
@@ -289,6 +342,17 @@ These endpoints **MUST REMAIN VULNERABLE** for educational purposes:
 - **Vulnerability:** SQL Injection via ORDER BY
 - **Attack Example:** `orderBy=username; DROP TABLE users;--`
 - **Behavior:** User input directly in ORDER BY clause
+
+**GET `/api/v1/activity-logs/search?startDate={date}&endDate={date}&userId={id}`**
+- **Vulnerability:** SQL Injection (S3649) - Clear source-to-sink path
+- **Attack Examples:**
+  - `startDate=2025-01-01' OR '1'='1'--&endDate=2025-12-31` (bypasses date filter)
+  - `userId=1' UNION SELECT id,username,email,password,role FROM users--` (extracts user data)
+  - `startDate=2025-01-01'; DELETE FROM activity_logs;--` (deletes all logs)
+- **Behavior:** 
+  - User input directly concatenated into SQL query in service layer
+  - Clear data flow: HTTP params → Controller → Service → EntityManager.executeQuery()
+  - Demonstrates multi-layer SQL injection vulnerability
 
 #### Path Traversal Endpoints
 
