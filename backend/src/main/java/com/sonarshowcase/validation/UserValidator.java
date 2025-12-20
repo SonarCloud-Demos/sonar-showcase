@@ -7,8 +7,19 @@ import java.util.regex.Pattern;
  * User validator with duplicated code
  * 
  * MNT-05: Duplicated validation logic (copy-pasted from OrderValidator)
+ * 
+ * This class provides validation methods for user data. Note that many
+ * of these validation methods are duplicated in OrderValidator.
  */
 public class UserValidator {
+
+    /**
+     * Default constructor for validator.
+     * Creates a new instance of UserValidator.
+     */
+    public UserValidator() {
+        // Default constructor
+    }
 
     // MNT: Duplicated pattern (also in OrderValidator)
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
@@ -22,6 +33,9 @@ public class UserValidator {
     
     /**
      * MNT-05: Duplicated code - same logic exists in OrderValidator
+     * 
+     * @param email The email address to validate
+     * @return true if the email is valid, false otherwise
      */
     public boolean validateEmail(String email) {
         // MNT: This exact code is duplicated in OrderValidator
@@ -51,6 +65,9 @@ public class UserValidator {
     
     /**
      * MNT: Duplicated validation logic
+     * 
+     * @param phone The phone number to validate
+     * @return true if the phone number is valid, false otherwise
      */
     public boolean validatePhone(String phone) {
         // MNT: This exact code is duplicated in OrderValidator
@@ -72,6 +89,9 @@ public class UserValidator {
     
     /**
      * MNT: Duplicated validation for names
+     * 
+     * @param name The name to validate
+     * @return true if the name is valid, false otherwise
      */
     public boolean validateName(String name) {
         // MNT: Duplicated in OrderValidator.validateCustomerName
@@ -95,6 +115,9 @@ public class UserValidator {
     
     /**
      * MNT: Duplicated address validation
+     * 
+     * @param address The address to validate
+     * @return true if the address is valid, false otherwise
      */
     public boolean validateAddress(String address) {
         // MNT: Duplicated in OrderValidator
@@ -113,6 +136,12 @@ public class UserValidator {
         return true;
     }
     
+    /**
+     * Validates a user object
+     * 
+     * @param user The user to validate
+     * @return true if the user is valid, false otherwise
+     */
     public boolean validateUser(User user) {
         if (user == null) {
             return false;

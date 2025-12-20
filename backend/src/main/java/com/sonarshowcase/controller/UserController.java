@@ -31,6 +31,14 @@ import java.util.ArrayList;
 @Tag(name = "Users", description = "User management API endpoints. ⚠️ Contains intentional security vulnerabilities for demonstration.")
 public class UserController {
 
+    /**
+     * Default constructor for Spring controller.
+     * Spring will use this constructor and inject dependencies via @Autowired fields.
+     */
+    public UserController() {
+        // Default constructor for Spring
+    }
+
     @Autowired
     private UserService userService;
     
@@ -44,6 +52,8 @@ public class UserController {
     
     /**
      * Get all users - bypasses service layer
+     * 
+     * @return ResponseEntity containing a list of all users
      */
     @Operation(summary = "Get all users", description = "Returns all users. ⚠️ SECURITY: Returns passwords in plain text (intentional vulnerability)")
     @ApiResponse(responseCode = "200", description = "List of users (includes sensitive data)")
@@ -58,6 +68,9 @@ public class UserController {
     
     /**
      * Get user by ID with NPE risk
+     * 
+     * @param id The user ID
+     * @return ResponseEntity containing the user
      */
     @Operation(summary = "Get user by ID", description = "Returns a user by ID. ⚠️ SECURITY: Returns password in plain text. ⚠️ BUG: Throws exception if user not found (NPE risk)")
     @ApiResponse(responseCode = "200", description = "User found")
@@ -73,6 +86,9 @@ public class UserController {
     
     /**
      * Create user - mixes concerns
+     * 
+     * @param userDto The user data transfer object
+     * @return ResponseEntity containing the created user
      */
     @Operation(
         summary = "Create new user", 
@@ -112,6 +128,9 @@ public class UserController {
     
     /**
      * Search users - potential SQL injection passthrough
+     * 
+     * @param q The search query string
+     * @return ResponseEntity containing a list of matching users
      */
     @Operation(summary = "Search users", description = "Searches users by username or email. ⚠️ MNT: Inefficient in-memory search. ⚠️ SECURITY: Returns passwords in plain text")
     @ApiResponse(responseCode = "200", description = "List of matching users")
@@ -135,6 +154,9 @@ public class UserController {
     
     /**
      * Delete user - no authorization check
+     * 
+     * @param id The user ID to delete
+     * @return ResponseEntity with a success message
      */
     @Operation(summary = "Delete user", description = "Deletes a user by ID. ⚠️ SECURITY: No authorization check - anyone can delete any user")
     @ApiResponse(responseCode = "200", description = "User deleted")
@@ -160,6 +182,13 @@ public class UserController {
      * 
      * Another attack: {@code GET /api/v1/users/login?username=' OR '1'='1'--&password=x}
      * This returns the first user in the database
+     */
+    /**
+     * Login endpoint with SQL injection vulnerability
+     * 
+     * @param username The username (vulnerable to SQL injection)
+     * @param password The password (vulnerable to SQL injection)
+     * @return ResponseEntity containing the user if login succeeds, or error message if it fails
      */
     @Operation(
         summary = "Login (VULNERABLE)", 
@@ -199,6 +228,12 @@ public class UserController {
      * VULNERABLE ENDPOINT - SQL Injection via LIKE clause
      * Attack example: GET /api/v1/users/vulnerable-search?term=' UNION SELECT * FROM users WHERE role='ADMIN'--
      */
+    /**
+     * Vulnerable search endpoint with SQL injection
+     * 
+     * @param term The search term (vulnerable to SQL injection)
+     * @return ResponseEntity containing a list of matching users
+     */
     @Operation(
         summary = "Vulnerable search (SQL INJECTION)", 
         description = "🔴 SQL INJECTION VULNERABILITY - User input directly concatenated into SQL LIKE clause. " +
@@ -230,6 +265,12 @@ public class UserController {
      * VULNERABLE ENDPOINT - ORDER BY injection
      * Attack example: GET /api/v1/users/sorted?orderBy=username; DROP TABLE users;--
      */
+    /**
+     * Get sorted users with SQL injection vulnerability
+     * 
+     * @param orderBy The column to sort by (vulnerable to SQL injection)
+     * @return ResponseEntity containing a sorted list of users
+     */
     @Operation(
         summary = "Get sorted users (SQL INJECTION)", 
         description = "🔴 SQL INJECTION VULNERABILITY - ORDER BY clause uses user input directly. " +
@@ -257,6 +298,11 @@ public class UserController {
     
     /**
      * Update password - extremely insecure
+     * 
+     * @param id The user ID
+     * @param oldPassword The old password (insecure - sent in URL)
+     * @param newPassword The new password (insecure - sent in URL, no validation)
+     * @return ResponseEntity with a success or error message
      */
     @Operation(
         summary = "Update password (INSECURE)", 

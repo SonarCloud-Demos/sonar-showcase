@@ -12,9 +12,21 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * Web configuration with insecure CORS settings
  * 
  * SEC-08: CORS Wildcard - allows any origin
+ * 
+ * This configuration class sets up CORS (Cross-Origin Resource Sharing) settings
+ * for the application. Note: The current configuration is intentionally insecure
+ * for demonstration purposes.
  */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
+
+    /**
+     * Default constructor for Spring configuration.
+     * Spring will use this constructor to create the configuration bean.
+     */
+    public WebConfig() {
+        // Default constructor for Spring
+    }
 
     /**
      * SEC: Wildcard CORS - allows any origin to access API
@@ -32,6 +44,8 @@ public class WebConfig implements WebMvcConfigurer {
     
     /**
      * Alternative CORS filter with same issues
+     * 
+     * @return CorsFilter instance with permissive CORS configuration
      */
     @Bean
     public CorsFilter corsFilter() {

@@ -18,13 +18,37 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
+    /**
+     * Finds a user by username
+     * 
+     * @param username The username to search for
+     * @return Optional containing the user if found
+     */
     Optional<User> findByUsername(String username);
     
+    /**
+     * Finds a user by email
+     * 
+     * @param email The email to search for
+     * @return Optional containing the user if found
+     */
     Optional<User> findByEmail(String email);
     
+    /**
+     * Finds all users with the specified role
+     * 
+     * @param role The role to search for
+     * @return List of users with the specified role
+     */
     List<User> findByRole(String role);
     
-    // MNT: Overly complex query
+    /**
+     * Finds active users by role
+     * MNT: Overly complex query
+     * 
+     * @param role The role to search for
+     * @return List of active users with the specified role, ordered by creation date descending
+     */
     @Query("SELECT u FROM User u WHERE u.active = true AND u.role = ?1 ORDER BY u.createdAt DESC")
     List<User> findActiveUsersByRole(String role);
 }

@@ -7,8 +7,20 @@ import java.util.UUID;
  * Token generator with insecure randomness
  * 
  * SEC-05: Using java.util.Random for security tokens
+ * 
+ * This class provides utility methods for generating various types of tokens.
+ * Note: This implementation uses insecure random number generation and should
+ * not be used in production environments.
  */
 public class TokenGenerator {
+
+    /**
+     * Private constructor to prevent instantiation.
+     * This is a utility class with only static methods.
+     */
+    private TokenGenerator() {
+        // Utility class - prevent instantiation
+    }
 
     // SEC: java.util.Random is NOT cryptographically secure - S2245
     private static final Random random = new Random();
@@ -58,6 +70,8 @@ public class TokenGenerator {
     
     /**
      * SEC: Generates reset token that's too short and predictable
+     * 
+     * @return A 6-digit password reset token
      */
     public static String generatePasswordResetToken() {
         // SEC: Only 6 digits - can be brute forced easily
@@ -67,6 +81,8 @@ public class TokenGenerator {
     
     /**
      * SEC: Returns hardcoded secret (information disclosure)
+     * 
+     * @return The hardcoded token secret
      */
     public static String getTokenSecret() {
         System.out.println("Token secret: " + TOKEN_SECRET); // SEC: Logging secret
@@ -75,6 +91,8 @@ public class TokenGenerator {
     
     /**
      * UUID generation - actually okay, but badly implemented
+     * 
+     * @return A truncated and uppercased UUID string
      */
     public static String generateUUID() {
         // This is actually fine, but we add unnecessary complexity

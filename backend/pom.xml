@@ -181,7 +181,6 @@
                         </goals>
                         <configuration>
                             <outputDirectory>${project.build.directory}/site/apidocs</outputDirectory>
-                            <reportOutputDirectory>${project.build.directory}/site/apidocs</reportOutputDirectory>
                         </configuration>
                     </execution>
                 </executions>

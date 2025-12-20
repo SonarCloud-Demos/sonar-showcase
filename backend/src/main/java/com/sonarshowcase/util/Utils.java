@@ -11,14 +11,29 @@ import java.util.List;
  */
 public class Utils {
 
+    /**
+     * Private constructor to prevent instantiation.
+     * This is a utility class with only static methods.
+     */
+    private Utils() {
+        // Utility class - prevent instantiation
+    }
+
     // MNT: Poor naming
+    /** Public static data field 1 */
     public static String data1;
+    /** Public static data field 2 */
     public static String data2;
+    /** Temporary variable */
     public static int temp;
+    /** Generic object variable */
     public static Object x;
     
     /**
      * MNT: Poor method implementation
+     * 
+     * @param input The input string to process
+     * @return The processed string in uppercase
      */
     public static String doStuff(String input) {
         if (input == null) {
@@ -39,6 +54,10 @@ public class Utils {
     
     /**
      * MNT: Tautological condition - always true
+     * 
+     * @param a First number
+     * @param b Second number
+     * @return Sum of a and b
      */
     public static int calculate(int a, int b) {
         int result = a + b;
@@ -56,6 +75,11 @@ public class Utils {
     
     /**
      * MNT: Poor variable naming
+     * 
+     * @param s Input string
+     * @param n Number of iterations
+     * @param f Flag to control processing
+     * @return Processed string
      */
     public static String processData(String s, int n, boolean f) {
         String temp1 = s;
@@ -77,6 +101,8 @@ public class Utils {
     
     /**
      * MNT: Confusing method that does nothing useful
+     * 
+     * @param obj Object to process
      */
     public static void doSomething(Object obj) {
         if (obj != null) {
@@ -89,6 +115,8 @@ public class Utils {
     
     /**
      * MNT: Method with misleading name
+     * 
+     * @return Empty list of users
      */
     public static List<String> getUsers() {
         // MNT: Returns empty list, name suggests it gets users
@@ -97,6 +125,8 @@ public class Utils {
     
     /**
      * MNT: Verbose loop implementation
+     * 
+     * @param items List of items to process
      */
     public static void processItems(List<String> items) {
         // MNT: Could use forEach or streams
@@ -110,6 +140,9 @@ public class Utils {
     
     /**
      * MNT: Overly complex for simple task
+     * 
+     * @param number Number to check
+     * @return true if number is positive, false otherwise
      */
     public static boolean isPositive(int number) {
         if (number > 0) {
@@ -129,6 +162,10 @@ public class Utils {
     
     /**
      * MNT: Duplicate code
+     * 
+     * @param first First name
+     * @param last Last name
+     * @return Formatted full name
      */
     public static String formatName1(String first, String last) {
         if (first == null) first = "";
@@ -138,6 +175,10 @@ public class Utils {
     
     /**
      * MNT: Duplicate of above
+     * 
+     * @param first First name
+     * @param last Last name
+     * @return Formatted full name
      */
     public static String formatName2(String first, String last) {
         if (first == null) first = "";
@@ -147,6 +188,10 @@ public class Utils {
     
     /**
      * MNT: Another duplicate
+     * 
+     * @param firstName First name
+     * @param lastName Last name
+     * @return Formatted full name
      */
     public static String formatFullName(String firstName, String lastName) {
         if (firstName == null) firstName = "";
