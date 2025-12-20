@@ -147,7 +147,7 @@ public class CounterService {
         // MNT: Using ActivityLogService creates dependency in 6-level cycle
         com.sonarshowcase.model.ActivityLog log = new com.sonarshowcase.model.ActivityLog();
         log.setUserId(userId);
-        log.setActivity("Counter incremented");
+        log.setAction("Counter incremented");
         activityLogService.createActivityLog(log);
     }
     
