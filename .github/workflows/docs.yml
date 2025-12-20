@@ -97,26 +97,35 @@ jobs:
           mvn javadoc:javadoc -pl backend
           
           # Verify JavaDoc was generated
-          if [ -d "backend/target/site/apidocs" ]; then
+          # JavaDoc may be in apidocs or apidocs/apidocs depending on Maven version
+          JAVADOC_DIR=""
+          if [ -f "backend/target/site/apidocs/index.html" ]; then
+            JAVADOC_DIR="backend/target/site/apidocs"
             echo "✅ Backend JavaDoc found at backend/target/site/apidocs"
-            echo "   Files in apidocs:"
-            ls -la backend/target/site/apidocs/ | head -10
-            if [ -f "backend/target/site/apidocs/index.html" ]; then
-              echo "✅ Backend index.html exists"
-              echo "   Total files in apidocs: $(find backend/target/site/apidocs -type f | wc -l)"
+          elif [ -f "backend/target/site/apidocs/apidocs/index.html" ]; then
+            JAVADOC_DIR="backend/target/site/apidocs/apidocs"
+            echo "✅ Backend JavaDoc found at backend/target/site/apidocs/apidocs (nested structure)"
+          elif [ -d "backend/target/site/apidocs" ]; then
+            echo "⚠️  JavaDoc directory exists but index.html not found in expected locations"
+            echo "   Searching for index.html:"
+            find backend/target/site/apidocs -name "index.html" -type f
+            # Try to find the actual JavaDoc location
+            JAVADOC_DIR=$(find backend/target/site/apidocs -name "index.html" -type f | head -1 | xargs dirname)
+            if [ -n "$JAVADOC_DIR" ]; then
+              echo "✅ Found JavaDoc at: $JAVADOC_DIR"
             else
-              echo "❌ Backend index.html missing!"
-              echo "   Searching for HTML files:"
-              find backend/target/site/apidocs -name "*.html" | head -5
+              echo "❌ ERROR: Could not locate JavaDoc index.html"
               exit 1
             fi
           else
             echo "❌ ERROR: Backend JavaDoc directory not found"
             echo "   Checking backend/target structure:"
-            find backend/target -type d 2>/dev/null | head -10
-            echo "   Checking if site directory exists:"
-            ls -la backend/target/site/ 2>/dev/null || echo "   site directory not found"
+            find backend/target -type d -name "*doc*" 2>/dev/null | head -10
             exit 1
+          fi
+          
+          if [ -n "$JAVADOC_DIR" ]; then
+            echo "   Total files in JavaDoc: $(find "$JAVADOC_DIR" -type f | wc -l)"
           fi
           
           # Verify TypeDoc was generated
@@ -235,34 +244,40 @@ jobs:
           EOF
           
           # Copy backend JavaDoc
-          if [ -d "backend/target/site/apidocs" ]; then
-            # Remove existing backend directory to avoid nested structures
-            rm -rf docs-site/backend
-            mkdir -p docs-site/backend
-            # Copy all files and directories from apidocs to backend
-            # Using * to copy all visible files, then handle hidden files separately
-            cp -r backend/target/site/apidocs/* docs-site/backend/ 2>/dev/null || true
-            # Also copy hidden files if any
-            cp -r backend/target/site/apidocs/.[!.]* docs-site/backend/ 2>/dev/null || true
-            echo "✅ Backend JavaDoc copied"
-            # Verify index.html exists
-            if [ -f "docs-site/backend/index.html" ]; then
-              echo "✅ Backend index.html found at docs-site/backend/index.html"
-              echo "   Backend docs file count: $(find docs-site/backend -type f | wc -l) files"
-            else
-              echo "❌ Backend index.html NOT found"
-              echo "   Files in docs-site/backend/:"
-              ls -la docs-site/backend/ | head -20
-              echo "   Source directory (backend/target/site/apidocs/) contents:"
-              ls -la backend/target/site/apidocs/ | head -20
-              echo "   Searching for index.html in source:"
-              find backend/target/site/apidocs -name "index.html" -type f
+          # Find the actual JavaDoc directory (handles nested apidocs/apidocs structure)
+          JAVADOC_SOURCE=""
+          if [ -f "backend/target/site/apidocs/index.html" ]; then
+            JAVADOC_SOURCE="backend/target/site/apidocs"
+          elif [ -f "backend/target/site/apidocs/apidocs/index.html" ]; then
+            JAVADOC_SOURCE="backend/target/site/apidocs/apidocs"
+          else
+            # Fallback: search for it
+            JAVADOC_SOURCE=$(find backend/target/site/apidocs -name "index.html" -type f | head -1 | xargs dirname)
+            if [ -z "$JAVADOC_SOURCE" ]; then
+              echo "❌ ERROR: Could not locate JavaDoc source directory"
               exit 1
             fi
+          fi
+          
+          echo "📁 Copying JavaDoc from: $JAVADOC_SOURCE"
+          # Remove existing backend directory to avoid nested structures
+          rm -rf docs-site/backend
+          mkdir -p docs-site/backend
+          # Copy all files and directories from JavaDoc source to backend
+          cp -r "$JAVADOC_SOURCE"/* docs-site/backend/ 2>/dev/null || true
+          # Also copy hidden files if any
+          cp -r "$JAVADOC_SOURCE"/.[!.]* docs-site/backend/ 2>/dev/null || true
+          echo "✅ Backend JavaDoc copied"
+          # Verify index.html exists
+          if [ -f "docs-site/backend/index.html" ]; then
+            echo "✅ Backend index.html found at docs-site/backend/index.html"
+            echo "   Backend docs file count: $(find docs-site/backend -type f | wc -l) files"
           else
-            echo "❌ ERROR: Backend JavaDoc not found at backend/target/site/apidocs"
-            echo "   Checking backend/target structure:"
-            find backend/target -type d 2>/dev/null | head -20
+            echo "❌ Backend index.html NOT found after copy"
+            echo "   Files in docs-site/backend/:"
+            ls -la docs-site/backend/ | head -20
+            echo "   Source directory ($JAVADOC_SOURCE) contents:"
+            ls -la "$JAVADOC_SOURCE" | head -20
             exit 1
           fi
           
