@@ -65,9 +65,9 @@ public class ActivityLogController {
      * 4. EntityManager.executeQuery() (sink)
      * 
      * Attack Examples:
-     * - Bypass date filter: GET /api/v1/activity-logs/search?startDate=2025-01-01' OR '1'='1'--&endDate=2025-12-31
-     * - Extract user data: GET /api/v1/activity-logs/search?startDate=2025-01-01&endDate=2025-12-31&userId=1' UNION SELECT id,username,email,password,role FROM users--
-     * - Delete logs: GET /api/v1/activity-logs/search?startDate=2025-01-01'; DELETE FROM activity_logs;--
+     * - Bypass date filter: GET /api/v1/activity-logs/search?startDate=2025-01-01&#39; OR &#39;1&#39;=&#39;1&#39;--&amp;endDate=2025-12-31
+     * - Extract user data: GET /api/v1/activity-logs/search?startDate=2025-01-01&amp;endDate=2025-12-31&amp;userId=1&#39; UNION SELECT id,username,email,password,role FROM users--
+     * - Delete logs: GET /api/v1/activity-logs/search?startDate=2025-01-01&#39;; DELETE FROM activity_logs;--
      * 
      * @param startDate Start date for filtering (vulnerable to SQL injection)
      * @param endDate End date for filtering (vulnerable to SQL injection)
@@ -78,7 +78,7 @@ public class ActivityLogController {
         summary = "Search activity logs by date range (VULNERABLE)", 
         description = "🔴 SQL INJECTION VULNERABILITY - Intentional security issue for demonstration. " +
                      "User input is directly concatenated into SQL query without sanitization. " +
-                     "Attack examples: startDate=2025-01-01' OR '1'='1'-- or userId=1' UNION SELECT * FROM users--"
+                     "Attack examples: startDate=2025-01-01&#39; OR &#39;1&#39;=&#39;1&#39;-- or userId=1&#39; UNION SELECT * FROM users--"
     )
     @ApiResponse(responseCode = "200", description = "List of activity logs (vulnerable to SQL injection)")
     @ApiResponse(responseCode = "500", description = "SQL error (may expose database structure)")

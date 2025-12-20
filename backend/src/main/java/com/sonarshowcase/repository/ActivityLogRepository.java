@@ -47,11 +47,11 @@ class ActivityLogRepositoryCustomImpl {
      * without any sanitization or parameterization.
      * 
      * Attack example: 
-     * startDate = "2025-01-01' OR '1'='1'--"
+     * startDate = "2025-01-01&#39; OR &#39;1&#39;=&#39;1&#39;--"
      * This will bypass the date filter and return all records
      * 
      * Another attack:
-     * userId = "1' UNION SELECT * FROM users WHERE role='ADMIN'--"
+     * userId = "1&#39; UNION SELECT * FROM users WHERE role=&#39;ADMIN&#39;--"
      * This can extract sensitive user data
      * 
      * @param startDate Start date for filtering (vulnerable to SQL injection)

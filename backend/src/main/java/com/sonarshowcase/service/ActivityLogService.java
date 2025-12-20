@@ -64,8 +64,8 @@ public class ActivityLogService {
      * Sink: SQL query execution via EntityManager
      * 
      * Attack examples:
-     * - startDate = "2025-01-01' OR '1'='1'--" (bypasses date filter)
-     * - userId = "1' UNION SELECT * FROM users WHERE role='ADMIN'--" (extracts user data)
+     * - startDate = "2025-01-01&#39; OR &#39;1&#39;=&#39;1&#39;--" (bypasses date filter)
+     * - userId = "1&#39; UNION SELECT * FROM users WHERE role=&#39;ADMIN&#39;--" (extracts user data)
      * 
      * @param startDate Start date string (vulnerable to SQL injection)
      * @param endDate End date string (vulnerable to SQL injection)
@@ -193,6 +193,9 @@ public class ActivityLogService {
     /**
      * Creates activity log with timestamp validation (duplicated logic)
      * MNT: Same validation as createActivityLog
+     * 
+     * @param activityLog The activity log to save
+     * @return The saved activity log
      */
     public ActivityLog saveActivityLog(ActivityLog activityLog) {
         // MNT: Duplicated validation logic
@@ -205,6 +208,9 @@ public class ActivityLogService {
     /**
      * Creates activity log entry (duplicated method)
      * MNT: Same logic as createActivityLog and saveActivityLog
+     * 
+     * @param log The activity log to add
+     * @return The added activity log
      */
     public ActivityLog addActivityLog(ActivityLog log) {
         // MNT: Duplicated validation logic
