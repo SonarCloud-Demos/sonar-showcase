@@ -71,6 +71,28 @@
             <version>2.3.0</version>
         </dependency>
 
+        <!-- SECURITY VULNERABILITY: Typo-squatting package - malicious dependency -->
+        <!-- WARNING: This is a typo-squatting attack demonstration -->
+        <!-- Legitimate package should be: com.fasterxml.jackson.core (from fasterxml) -->
+        <!-- This malicious package uses 'org' instead of 'com' to trick developers -->
+        <dependency>
+            <groupId>org.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.15.2</version>
+        </dependency>
+
+        <!-- SECURITY VULNERABILITY: Another typo-squatting package - malicious crypto dependency -->
+        <!-- WARNING: This is a dependency confusion / typo-squatting attack demonstration -->
+        <!-- Legitimate package should be: commons-codec from org.apache.commons (group:artifact format) -->
+        <!-- This malicious package uses wrong groupId 'org.apache.commons.codec' to trick developers -->
+        <!-- In reality, the legitimate package is: org.apache.commons:commons-codec -->
+        <!-- This malicious variant could contain backdoors in crypto operations -->
+        <dependency>
+            <groupId>org.apache.commons.codec</groupId>
+            <artifactId>codec</artifactId>
+            <version>1.15</version>
+        </dependency>
+
         <!-- Testing -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

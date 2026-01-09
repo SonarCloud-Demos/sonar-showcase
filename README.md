@@ -216,6 +216,7 @@ For detailed specifications and requirements:
 - **Business Logic:** `docs/business-logic.md` - Business flows and rules
 - **API Reference:** `docs/api-spec.md` - API endpoint reference (legacy, see Swagger UI for current)
 - **AI Assistant Guide:** `docs/AI_ASSISTANT_GUIDE.md` - Guide for AI assistants working on this codebase
+- **Supply Chain Attacks:** `docs/SECURITY_SUPPLY_CHAIN_ATTACKS.md` - Documentation of intentional typo-squatting vulnerabilities
 
 ### Scanner Configuration
 
@@ -259,11 +260,18 @@ This project uses a **hybrid configuration approach** for SonarQube scanning:
 | POST | `/api/v1/users` | Create user |
 | PUT | `/api/v1/users/{id}/password` | Update password (⚠️ insecure) |
 | DELETE | `/api/v1/users/{id}` | Delete user |
+| POST | `/api/v1/users/encrypt-password?password=X` | Encrypt password (⚠️ uses malicious package) |
+| POST | `/api/v1/users/decrypt-password?encryptedPassword=X` | Decrypt password (⚠️ CRITICAL - uses malicious package) |
+| POST | `/api/v1/users/{userId}/secure-password?password=X` | Store secure password (⚠️ uses malicious package) |
+| POST | `/api/v1/users/validate-hash?password=X&hash=Y` | Validate password hash (⚠️ uses malicious package) |
 | GET | `/api/v1/orders` | Get all orders |
 | GET | `/api/v1/orders/{id}` | Get order by ID |
 | GET | `/api/v1/orders/user/{userId}` | Get orders by user ID |
 | POST | `/api/v1/orders` | Create order |
 | POST | `/api/v1/orders/{id}/discount?code={code}` | Apply discount code |
+| GET | `/api/v1/orders/{id}/json` | Get order as JSON (⚠️ uses malicious package) |
+| POST | `/api/v1/orders/from-json` | Create order from JSON (⚠️ uses malicious package) |
+| POST | `/api/v1/orders/{id}/enhanced-json` | Get enhanced order JSON (⚠️ uses malicious package) |
 | GET | `/api/v1/activity-logs` | Get all activity logs |
 | GET | `/api/v1/activity-logs/user/{userId}` | Get activity logs by user ID |
 | POST | `/api/v1/activity-logs` | Create activity log |
@@ -284,6 +292,13 @@ This project uses a **hybrid configuration approach** for SonarQube scanning:
 | POST | `/api/v1/files/export?filename=X` | 🔴 Path Traversal (Write) |
 | POST | `/api/v1/files/extract?zipPath=X&destDir=Y` | 🔴 Zip Slip Vulnerability |
 | DELETE | `/api/v1/files/delete?filename=X` | 🔴 Path Traversal (Delete) |
+| GET | `/api/v1/orders/{id}/json` | 🔴 Supply Chain Attack (Typo-Squatting) |
+| POST | `/api/v1/orders/from-json` | 🔴 Supply Chain Attack (RCE Risk) |
+| POST | `/api/v1/orders/{id}/enhanced-json` | 🔴 Supply Chain Attack (Data Exfiltration) |
+| POST | `/api/v1/users/encrypt-password?password=X` | 🔴 Supply Chain Attack (Password Logging) |
+| POST | `/api/v1/users/decrypt-password?encryptedPassword=X` | 🔴 Supply Chain Attack (Password Theft - CRITICAL) |
+| POST | `/api/v1/users/{userId}/secure-password?password=X` | 🔴 Supply Chain Attack (Password Logging) |
+| POST | `/api/v1/users/validate-hash?password=X&hash=Y` | 🔴 Supply Chain Attack (Weak Crypto) |
 
 ### Example Requests
 
@@ -324,6 +339,17 @@ curl -X POST http://localhost:8080/api/v1/users \
 | `GET /api/v1/files/logs` | `date=2025/../../../etc/shadow` | Log date injection |
 | `POST /api/v1/files/export` | `filename=../../../tmp/pwned` | Write arbitrary files |
 | `DELETE /api/v1/files/delete` | `filename=../../../important` | Delete arbitrary files |
+
+#### Supply Chain Attacks (Typo-Squatting)
+- **Malicious Jackson Package** (`org.fasterxml.jackson.core` instead of `com.fasterxml.jackson.core`)
+  - Used in: `JsonTransformer.java`, `OrderController` JSON endpoints
+  - Risks: Data exfiltration, RCE, credential theft
+  - See `docs/SECURITY_SUPPLY_CHAIN_ATTACKS.md` for details
+
+- **Malicious Crypto Package** (`org.apache.commons.codec` instead of `org.apache.commons:commons-codec`)
+  - Used in: `SecureCryptoUtil.java`, `UserController` crypto endpoints
+  - Risks: Password logging, key exfiltration, weak crypto
+  - See `docs/SECURITY_SUPPLY_CHAIN_ATTACKS.md` for details
 
 #### Other Security Issues
 - Hardcoded credentials throughout (PaymentService, DatabaseConfig)

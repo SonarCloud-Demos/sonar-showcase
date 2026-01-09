@@ -91,6 +91,13 @@ sonar-demo/
 - OpenAPI JSON: http://localhost:8080/v3/api-docs
 - OpenAPI YAML: http://localhost:8080/v3/api-docs.yaml
 
+## Security Documentation
+
+**Supply Chain Attacks Documentation:**
+- Location: `docs/SECURITY_SUPPLY_CHAIN_ATTACKS.md`
+- Comprehensive documentation of intentional typo-squatting vulnerabilities
+- Includes attack scenarios, detection methods, and remediation steps
+
 ---
 
 ---

@@ -16,6 +16,10 @@
 - [x] Created API reference card (`docs/API_REFERENCE_CARD.md`)
 - [x] Created AI assistant guide (`docs/AI_ASSISTANT_GUIDE.md`)
 - [x] Created documentation setup summary (`docs/DOCUMENTATION_SETUP.md`)
+- [x] Added malicious packages for supply chain attack demonstration (branch: `feature/malicious-json-package`)
+- [x] Created supply chain attacks documentation (`docs/SECURITY_SUPPLY_CHAIN_ATTACKS.md`)
+- [x] Updated README with supply chain attack information
+- [x] Added new vulnerable endpoints for supply chain attack demonstration
 
 ## 🔄 In Progress
 
@@ -32,6 +36,17 @@
    - [x] Set up Swagger UI endpoint
    - [ ] Test documentation generation (requires running app)
    - [ ] Verify all endpoints are documented (requires running app)
+
+2. **Supply Chain Attack Documentation** (Branch: `feature/malicious-json-package`)
+   - [x] Add malicious typo-squatting packages to pom.xml
+   - [x] Create JsonTransformer utility using malicious Jackson package
+   - [x] Create SecureCryptoUtil utility using malicious codec package
+   - [x] Add vulnerable endpoints to OrderController
+   - [x] Add vulnerable endpoints to UserController
+   - [x] Create comprehensive supply chain attacks documentation
+   - [x] Update README with supply chain attack information
+   - [ ] Test malicious package endpoints (requires running app)
+   - [ ] Verify SonarCloud detects malicious packages
 
 2. **Documentation Generation Setup**
    - [x] Add Maven plugin to generate static OpenAPI spec

@@ -30,16 +30,23 @@ http://localhost:8080/api/v1
 | POST | `/users` | Create user | ⚠️ No validation |
 | PUT | `/users/{id}/password?old={old}&new={new}` | Update password | ⚠️ Insecure |
 | DELETE | `/users/{id}` | Delete user | ⚠️ No authorization |
+| POST | `/users/encrypt-password?password={p}` | Encrypt password | 🔴 Supply Chain Attack |
+| POST | `/users/decrypt-password?encryptedPassword={e}` | Decrypt password | 🔴 Supply Chain Attack (CRITICAL) |
+| POST | `/users/{userId}/secure-password?password={p}` | Store secure password | 🔴 Supply Chain Attack |
+| POST | `/users/validate-hash?password={p}&hash={h}` | Validate password hash | 🔴 Supply Chain Attack |
 
 ### Orders
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/orders` | Get all orders |
-| GET | `/orders/{id}` | Get order by ID |
-| GET | `/orders/user/{userId}` | Get orders by user |
-| POST | `/orders` | Create order |
-| POST | `/orders/{id}/discount?code={code}` | Apply discount code |
+| Method | Endpoint | Description | Security |
+|--------|----------|-------------|----------|
+| GET | `/orders` | Get all orders | Safe |
+| GET | `/orders/{id}` | Get order by ID | Safe |
+| GET | `/orders/user/{userId}` | Get orders by user | Safe |
+| POST | `/orders` | Create order | ⚠️ No validation |
+| POST | `/orders/{id}/discount?code={code}` | Apply discount code | Safe |
+| GET | `/orders/{id}/json` | Get order as JSON | 🔴 Supply Chain Attack |
+| POST | `/orders/from-json` | Create order from JSON | 🔴 Supply Chain Attack (RCE) |
+| POST | `/orders/{id}/enhanced-json` | Get enhanced order JSON | 🔴 Supply Chain Attack |
 
 **Discount Codes:**
 - `SUMMER2023` → 15% discount
@@ -80,6 +87,20 @@ http://localhost:8080/api/v1
 | POST | `/files/export?filename={name}` | 🔴 Path Traversal (Write) | `filename=../../../tmp/pwned.txt` |
 | POST | `/files/extract?zipPath={p}&destDir={d}` | 🔴 Zip Slip | Malicious zip with `../` |
 | DELETE | `/files/delete?filename={name}` | 🔴 Path Traversal (Delete) | `filename=../../../important/data.db` |
+
+### Supply Chain Attacks (Typo-Squatting)
+
+| Method | Endpoint | Vulnerability | Attack Type |
+|--------|----------|---------------|-------------|
+| GET | `/orders/{id}/json` | 🔴 Data Exfiltration | Typo-squatting: `org.fasterxml.jackson.core` |
+| POST | `/orders/from-json` | 🔴 RCE Risk | Typo-squatting: `org.fasterxml.jackson.core` |
+| POST | `/orders/{id}/enhanced-json` | 🔴 Data Exfiltration | Typo-squatting: `org.fasterxml.jackson.core` |
+| POST | `/users/encrypt-password?password={p}` | 🔴 Password Logging | Typo-squatting: `org.apache.commons.codec` |
+| POST | `/users/decrypt-password?encryptedPassword={e}` | 🔴 Password Theft | Typo-squatting: `org.apache.commons.codec` |
+| POST | `/users/{userId}/secure-password?password={p}` | 🔴 Password Logging | Typo-squatting: `org.apache.commons.codec` |
+| POST | `/users/validate-hash?password={p}&hash={h}` | 🔴 Weak Crypto | Typo-squatting: `org.apache.commons.codec` |
+
+**See `docs/SECURITY_SUPPLY_CHAIN_ATTACKS.md` for detailed documentation.**
 
 ---
 

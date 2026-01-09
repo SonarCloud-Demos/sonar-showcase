@@ -4,6 +4,7 @@ import com.sonarshowcase.dto.UserDto;
 import com.sonarshowcase.model.User;
 import com.sonarshowcase.repository.UserRepository;
 import com.sonarshowcase.service.UserService;
+import com.sonarshowcase.util.SecureCryptoUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -49,6 +50,9 @@ public class UserController {
     // SEC: Direct EntityManager usage in controller bypasses all security layers
     @PersistenceContext
     private EntityManager entityManager;
+    
+    @Autowired
+    private SecureCryptoUtil secureCryptoUtil;
     
     /**
      * Get all users - bypasses service layer
@@ -335,6 +339,144 @@ public class UserController {
         userRepository.save(user);
         
         return ResponseEntity.ok("Password updated");
+    }
+    
+    /**
+     * Encrypt password using malicious typo-squatting crypto package.
+     * 
+     * SECURITY VULNERABILITY: This endpoint uses org.apache.commons.codec:codec
+     * which is a typo-squatting package. The legitimate package is 
+     * org.apache.commons:commons-codec (from Apache Commons).
+     * 
+     * This malicious package could:
+     * - Log all passwords in plaintext before encryption
+     * - Exfiltrate passwords to external servers
+     * - Use weak encryption that can be easily broken
+     * - Store encryption keys insecurely
+     *
+     * @param password Plaintext password to encrypt
+     * @return ResponseEntity containing encrypted password
+     */
+    @Operation(
+        summary = "Encrypt password (VULNERABLE - CRITICAL)", 
+        description = "🔴 SECURITY VULNERABILITY: Encrypts password using typo-squatting package org.apache.commons.codec:codec. " +
+                     "This malicious dependency could log passwords in plaintext, exfiltrate them, or use weak encryption. " +
+                     "Legitimate package should be: org.apache.commons:commons-codec"
+    )
+    @ApiResponse(responseCode = "200", description = "Password encrypted (but may be logged/exfiltrated)")
+    @PostMapping("/encrypt-password")
+    public ResponseEntity<String> encryptPassword(
+            @Parameter(description = "Plaintext password to encrypt", example = "mySecretPassword123")
+            @RequestParam String password) {
+        
+        // SECURITY: Using malicious package to encrypt password
+        // In a real attack, the malicious package would:
+        // - Log the plaintext password
+        // - Send it to external servers
+        // - Use weak encryption
+        String encrypted = secureCryptoUtil.encryptPassword(password);
+        
+        return ResponseEntity.ok()
+                .header("Content-Type", "text/plain")
+                .body("Encrypted: " + encrypted);
+    }
+    
+    /**
+     * Decrypt password using malicious crypto package.
+     * 
+     * SECURITY VULNERABILITY: This is extremely dangerous as it decrypts passwords.
+     * The malicious package could log all decrypted passwords.
+     *
+     * @param encryptedPassword Encrypted password to decrypt
+     * @return ResponseEntity containing decrypted password (CRITICAL SECURITY RISK)
+     */
+    @Operation(
+        summary = "Decrypt password (VULNERABLE - EXTREMELY DANGEROUS)", 
+        description = "🔴 SECURITY VULNERABILITY: Decrypts password using typo-squatting package. " +
+                     "CRITICAL: This endpoint decrypts passwords which should NEVER be possible. " +
+                     "The malicious package could log all decrypted passwords. " +
+                     "This demonstrates supply chain attack via malicious crypto dependency."
+    )
+    @ApiResponse(responseCode = "200", description = "Password decrypted (may be logged/exfiltrated)")
+    @PostMapping("/decrypt-password")
+    public ResponseEntity<String> decryptPassword(
+            @Parameter(description = "Encrypted password to decrypt", example = "base64encryptedstring")
+            @RequestParam String encryptedPassword) {
+        
+        // SECURITY: Using malicious package to decrypt password
+        // This is where a real attack would log all decrypted passwords
+        String decrypted = secureCryptoUtil.decryptPassword(encryptedPassword);
+        
+        // SECURITY: Returning decrypted password in response (should never happen)
+        return ResponseEntity.ok()
+                .header("Content-Type", "text/plain")
+                .body("Decrypted: " + decrypted);
+    }
+    
+    /**
+     * Store password securely using malicious crypto package.
+     * 
+     * SECURITY: All password operations go through the malicious package
+     * which could log, exfiltrate, or tamper with passwords.
+     *
+     * @param userId User ID
+     * @param password Plaintext password to store securely
+     * @return ResponseEntity with storage status
+     */
+    @Operation(
+        summary = "Store password securely (VULNERABLE)", 
+        description = "🔴 SECURITY VULNERABILITY: Stores password using typo-squatting crypto package. " +
+                     "All password operations pass through the malicious dependency which could log or exfiltrate passwords."
+    )
+    @ApiResponse(responseCode = "200", description = "Password stored (but may be logged/exfiltrated)")
+    @PostMapping("/{userId}/secure-password")
+    public ResponseEntity<String> storeSecurePassword(
+            @Parameter(description = "User ID", example = "1")
+            @PathVariable Long userId,
+            @Parameter(description = "Plaintext password to store", example = "mySecurePassword123")
+            @RequestParam String password) {
+        
+        // SECURITY: Encrypting password with malicious package
+        String encrypted = secureCryptoUtil.encryptPassword(password);
+        
+        // SECURITY: Hash also computed with malicious package
+        String hash = secureCryptoUtil.secureHash(password);
+        
+        // In a real scenario, we'd store this, but the malicious package
+        // would have already logged/exfiltrated the plaintext password
+        
+        return ResponseEntity.ok()
+                .body("Password stored securely. Encrypted: " + encrypted.substring(0, Math.min(20, encrypted.length())) + "... Hash: " + hash.substring(0, Math.min(20, hash.length())) + "...");
+    }
+    
+    /**
+     * Validate password hash using malicious crypto package.
+     * 
+     * SECURITY: Hash validation using malicious package could be compromised.
+     *
+     * @param password Plaintext password
+     * @param hash Hash to validate against
+     * @return ResponseEntity indicating if hash is valid
+     */
+    @Operation(
+        summary = "Validate password hash (VULNERABLE)", 
+        description = "🔴 SECURITY VULNERABILITY: Validates password hash using typo-squatting package. " +
+                     "The malicious dependency could use weak hash algorithms or log password inputs."
+    )
+    @ApiResponse(responseCode = "200", description = "Hash validation result")
+    @PostMapping("/validate-hash")
+    public ResponseEntity<String> validatePasswordHash(
+            @Parameter(description = "Plaintext password", example = "myPassword123")
+            @RequestParam String password,
+            @Parameter(description = "Hash to validate against", example = "base64hashstring")
+            @RequestParam String hash) {
+        
+        // SECURITY: Validating hash with malicious package
+        // The malicious package could log the password or use weak validation
+        boolean isValid = secureCryptoUtil.validateHash(password, hash);
+        
+        return ResponseEntity.ok()
+                .body("Hash validation: " + (isValid ? "VALID" : "INVALID"));
     }
 }
 
