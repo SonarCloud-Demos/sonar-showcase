@@ -117,6 +117,85 @@ This document describes a **REAL supply chain attack** that was discovered in Ma
 
 ---
 
+### 3. Dependency Confusion: Maven Compiler Plugin (`maven-compiler-plugin` npm package)
+
+**Location:** NPM registry (JavaScript/TypeScript projects)  
+**Vulnerability ID:** SNYK-JS-MAVENCOMPILERPLUGIN-3091064  
+**CVSS Score:** 9.8 (Critical)  
+**Reference:** https://security.snyk.io/vuln/SNYK-JS-MAVENCOMPILERPLUGIN-3091064
+
+**Malicious Package (REAL ATTACK):**
+```json
+{
+  "name": "maven-compiler-plugin",
+  "version": "latest"
+}
+```
+
+**Legitimate Package (Maven):**
+```xml
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-compiler-plugin</artifactId>
+    <version>3.13.0</version>
+</plugin>
+```
+
+**Attack Vector:**
+- **Dependency Confusion**: Malicious npm package with same name as legitimate Maven plugin
+- **Cross-Ecosystem Confusion**: Targets developers working with both Maven and npm
+- **Automatic Execution**: Executes malicious code when installed via npm
+- **Namespace Impersonation**: Uses identical name to legitimate Maven plugin
+- Developers may accidentally install npm package when they meant to use Maven plugin
+
+**What This REAL Malicious Package Does:**
+1. **Automatic Execution**: Executes malicious code on installation via npm
+2. **Code Execution**: Can execute arbitrary code on the host system
+3. **Data Exfiltration**: May steal sensitive information from the development environment
+4. **System Compromise**: Can install backdoors or additional malware
+5. **Credential Theft**: May access environment variables, API keys, and secrets
+6. **Lateral Movement**: Can spread to other systems in the network
+
+**Real-World Impact:**
+- **Critical Severity**: CVSS 9.8 indicates complete system compromise potential
+- **Mature Exploit**: Proof-of-concept code available, high likelihood of exploitation
+- **Total Loss**: Complete loss of confidentiality, integrity, and availability
+- **Arbitrary Code Execution**: Attackers can execute any code on compromised systems
+- **Supply Chain Risk**: Affects entire development pipeline if installed
+
+**Why This Attack is Dangerous:**
+- **Cross-Platform Confusion**: Developers using both Maven and npm may confuse package names
+- **Automatic Installation**: npm installs packages automatically, executing malicious code
+- **Build Pipeline Risk**: If installed in CI/CD, affects all builds and deployments
+- **Developer Machine Compromise**: Can compromise entire development environment
+- **Supply Chain Propagation**: Can spread to production if not detected
+
+**Mitigation Implemented:**
+1. **Explicit Maven Plugin Configuration**: Added explicit `maven-compiler-plugin` version in `pom.xml`
+2. **Repository Restrictions**: Configured Maven to only use trusted repositories (Maven Central)
+3. **Checksum Verification**: Enabled checksum verification in Maven settings
+4. **NPM Security Configuration**: Added `.npmrc` with security settings to prevent malicious package installation
+5. **Maven Settings Security**: Created `.mvn/settings.xml` with repository restrictions
+6. **Documentation**: Comprehensive documentation of the vulnerability and mitigation
+
+**Files Affected:**
+- `pom.xml` - Added explicit maven-compiler-plugin configuration
+- `.npmrc` - NPM security configuration to prevent malicious package installation
+- `.mvn/settings.xml` - Maven security settings with repository restrictions
+- `docs/SECURITY_SUPPLY_CHAIN_ATTACKS.md` - This documentation
+
+**Prevention Best Practices:**
+1. **Always Use Explicit Versions**: Pin exact versions for all plugins and dependencies
+2. **Verify Package Sources**: Always verify package names match official documentation
+3. **Separate Ecosystems**: Be aware of cross-ecosystem confusion (Maven vs npm)
+4. **Repository Restrictions**: Only use trusted repositories (Maven Central, npm official registry)
+5. **Checksum Verification**: Enable checksum verification in build tools
+6. **Dependency Scanning**: Use automated tools (Snyk, OWASP Dependency-Check) to detect malicious packages
+7. **Regular Audits**: Regularly audit dependencies for suspicious packages
+8. **CI/CD Security**: Scan dependencies in CI/CD pipelines before deployment
+
+---
+
 ## Attack Scenarios
 
 ### Scenario 1: REAL Attack - Automatic Execution and C2 Communication
@@ -169,6 +248,35 @@ This document describes a **REAL supply chain attack** that was discovered in Ma
 - Lateral movement to other systems
 - Long-term persistent access
 
+### Scenario 4: Dependency Confusion - Maven Compiler Plugin (SNYK-JS-MAVENCOMPILERPLUGIN-3091064)
+
+**REAL Attack Flow:**
+1. Developer working on project with both Maven and npm dependencies
+2. Developer accidentally runs `npm install maven-compiler-plugin` (thinking it's needed)
+3. **Automatic Execution**: Malicious npm package executes on installation
+4. **Code Execution**: Malicious code runs with full system privileges
+5. **Credential Theft**: Steals environment variables, API keys, SSH keys
+6. **Backdoor Installation**: Installs persistent backdoor for long-term access
+7. **CI/CD Compromise**: If installed in CI/CD, affects all builds and deployments
+8. **Production Risk**: Malicious code may be deployed to production
+
+**REAL Impact:**
+- **CVSS 9.8 (Critical)**: Complete system compromise
+- **Arbitrary Code Execution**: Attackers can execute any code
+- **Total Loss**: Complete loss of confidentiality, integrity, and availability
+- **Supply Chain Compromise**: Entire development pipeline at risk
+- **Production Deployment**: Malicious code may reach production systems
+- **Data Exfiltration**: Sensitive data can be stolen
+- **Regulatory Compliance**: GDPR, PCI-DSS violations
+- **Reputation Damage**: Loss of customer trust
+
+**Why This is Particularly Dangerous:**
+- **Cross-Ecosystem Confusion**: Easy to confuse Maven plugin with npm package
+- **Automatic Execution**: npm packages execute code automatically on install
+- **Developer Machine Access**: Compromises entire development environment
+- **Build Pipeline Risk**: Can affect all CI/CD builds if installed there
+- **Silent Execution**: May go undetected until significant damage is done
+
 ---
 
 ## Detection and Prevention
@@ -199,23 +307,35 @@ This document describes a **REAL supply chain attack** that was discovered in Ma
 
 1. **Use Dependency Management:**
    - Pin exact versions in dependency management
-   - Use dependency lock files (Maven: `maven-dependency-plugin`)
+   - Use dependency lock files (Maven: `maven-dependency-plugin`, npm: `package-lock.json`)
    - Regularly update and review dependencies
+   - **Explicit Plugin Configuration**: Always explicitly configure Maven plugins with versions
 
 2. **Verify Package Sources:**
    - Always use official Maven Central repositories
-   - Verify package groupId matches official documentation
+   - Always use official npm registry (registry.npmjs.org)
+   - Verify package groupId/package name matches official documentation
    - Check package maintainer identity and reputation
+   - **Cross-Ecosystem Awareness**: Be aware of Maven vs npm package name confusion
 
 3. **Implement Security Policies:**
    - Require security review for new dependencies
-   - Use automated dependency scanning in CI/CD
+   - Use automated dependency scanning in CI/CD (Snyk, OWASP Dependency-Check)
    - Block packages from untrusted sources
+   - **Repository Restrictions**: Configure Maven and npm to only use trusted repositories
+   - **Checksum Verification**: Enable checksum verification in Maven settings
 
 4. **Monitor and Audit:**
    - Regular security audits of dependencies
-   - Monitor for known vulnerabilities (CVE database)
+   - Monitor for known vulnerabilities (CVE database, Snyk)
    - Track and review all dependency changes
+   - **Automated Scanning**: Run `npm audit` and Maven dependency checks regularly
+
+5. **Configuration Security:**
+   - Use `.npmrc` with security settings (audit, strict-ssl, registry restrictions)
+   - Use Maven `settings.xml` with repository mirrors and checksum policies
+   - Block external repositories by default
+   - Require HTTPS for all repository access
 
 ---
 
@@ -354,6 +474,12 @@ To fix these vulnerabilities:
    - **Version Pinning**: Pin exact versions and verify checksums
    - **Regular Audits**: Regularly audit dependencies for suspicious packages
    - **Monitor Downloads**: Check package download counts and maintainer reputation
+   - **Cross-Ecosystem Awareness**: Be aware of Maven vs npm package name confusion
+   - **Explicit Plugin Configuration**: Always explicitly configure Maven plugins with versions
+   - **Repository Restrictions**: Configure Maven and npm to only use trusted repositories
+   - **Checksum Verification**: Enable checksum verification in Maven settings
+   - **NPM Security**: Use `.npmrc` with security settings (audit, strict-ssl)
+   - **Maven Security**: Use `settings.xml` with repository mirrors and checksum policies
 
 4. **Remove or Refactor Code:**
    - Remove `JsonTransformer.java` or refactor to use legitimate package
@@ -369,11 +495,18 @@ To fix these vulnerabilities:
 - **[Aikido - Maven Central Jackson Typosquatting](https://www.aikido.dev/blog/maven-central-jackson-typosquatting-malware)** - Technical analysis
 - **[Cybersecurity News - Maven Central Infiltration](https://cybersecuritynews.com/hackers-infiltrated-maven-central/)** - Additional coverage
 
+### Maven Compiler Plugin Dependency Confusion
+- **[Snyk - SNYK-JS-MAVENCOMPILERPLUGIN-3091064](https://security.snyk.io/vuln/SNYK-JS-MAVENCOMPILERPLUGIN-3091064)** - Official vulnerability report
+- **[OWASP Dependency Confusion](https://owasp.org/www-community/vulnerabilities/Dependency_Confusion)** - General dependency confusion attacks
+- **[Maven Central Repository](https://central.sonatype.com/)** - Official Maven repository
+- **[NPM Official Registry](https://www.npmjs.com/)** - Official npm registry
+
 ### General Supply Chain Security
 - [OWASP Dependency Confusion](https://owasp.org/www-community/vulnerabilities/Dependency_Confusion)
 - [NPM Typo-Squatting](https://snyk.io/blog/typosquatting-attacks/)
 - [Maven Central Repository](https://central.sonatype.com/)
 - [OWASP Dependency-Check](https://owasp.org/www-project-dependency-check/)
+- [Snyk - Dependency Confusion Attacks](https://snyk.io/blog/dependency-confusion-attacks/)
 
 ---
 
