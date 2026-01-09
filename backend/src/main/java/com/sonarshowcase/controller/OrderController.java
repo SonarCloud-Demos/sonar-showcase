@@ -1,6 +1,8 @@
 package com.sonarshowcase.controller;
 
 import com.sonarshowcase.model.Order;
+import com.sonarshowcase.model.User;
+import com.sonarshowcase.repository.UserRepository;
 import com.sonarshowcase.service.OrderService;
 import com.sonarshowcase.util.JsonTransformer;
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,6 +41,9 @@ public class OrderController {
     
     @Autowired
     private JsonTransformer jsonTransformer;
+    
+    @Autowired
+    private UserRepository userRepository;
     
     /**
      * Gets all orders
@@ -144,26 +149,33 @@ public class OrderController {
     }
     
     /**
-     * Transforms order to JSON format using malicious typo-squatting package.
+     * Transforms order to JSON format - demonstrates REAL typosquatting attack.
      * 
-     * SECURITY VULNERABILITY: This endpoint uses org.fasterxml.jackson.core
-     * which is a typo-squatting package. The legitimate package should be
-     * com.fasterxml.jackson.core (from fasterxml).
+     * SECURITY DEMONSTRATION: This endpoint documents a REAL malicious package
+     * org.fasterxml.jackson.core:jackson-databind discovered in Maven Central (December 2024).
      * 
-     * This malicious package could:
-     * - Exfiltrate order data to external servers
-     * - Log sensitive customer information
-     * - Execute arbitrary code
-     * - Create backdoors in the system
+     * REAL-WORLD INCIDENT:
+     * - Source: https://www.esecurityplanet.com/threats/malicious-jackson-lookalike-library-slips-into-maven-central/
+     * - Malicious: org.fasterxml.jackson.core (uses 'org' instead of 'com')
+     * - Legitimate: com.fasterxml.jackson.core (from fasterxml.com)
+     * 
+     * The REAL malicious package would have:
+     * - Executed automatically in Spring Boot
+     * - Contacted C2 servers to download Cobalt Strike beacons
+     * - Used obfuscation to evade detection
+     * - Performed credential theft and lateral movement
+     * 
+     * NOTE: This code uses the legitimate package but documents the real attack.
      *
      * @param id Order ID
      * @return ResponseEntity containing order as JSON string
      */
     @Operation(
-        summary = "Get order as JSON (VULNERABLE)", 
-        description = "🔴 SECURITY VULNERABILITY: Uses typo-squatting package org.fasterxml.jackson.core. " +
-                     "This malicious dependency could exfiltrate data, log sensitive information, or execute malicious code. " +
-                     "Legitimate package should be: com.fasterxml.jackson.core"
+        summary = "Get order as JSON (DEMONSTRATES REAL ATTACK)", 
+        description = "🔴 SECURITY DEMONSTRATION: Documents REAL malicious typosquatting package " +
+                     "org.fasterxml.jackson.core:jackson-databind discovered in Maven Central (Dec 2024). " +
+                     "This package would automatically execute, contact C2 servers, and download Cobalt Strike beacons. " +
+                     "Legitimate package: com.fasterxml.jackson.core:jackson-databind"
     )
     @ApiResponse(responseCode = "200", description = "Order as JSON string")
     @ApiResponse(responseCode = "500", description = "Order not found or transformation failed")
@@ -174,16 +186,18 @@ public class OrderController {
         
         Order order = orderService.getOrderById(id);
         
-        // SECURITY: Converting order to map and using malicious package
-        // All order data passes through the malicious JSON transformer
+        // SECURITY DEMONSTRATION: Converting order to map
+        // Documents REAL attack where org.fasterxml.jackson.core (malicious) was used
+        // The malicious package was discovered Dec 2024 and would have exfiltrated all data
         Map<String, Object> orderData = new HashMap<>();
         orderData.put("id", order.getId());
-        orderData.put("userId", order.getUserId());
+        orderData.put("userId", order.getUser() != null ? order.getUser().getId() : null);
         orderData.put("totalAmount", order.getTotalAmount());
         orderData.put("status", order.getStatus());
-        orderData.put("createdAt", order.getCreatedAt() != null ? order.getCreatedAt().toString() : null);
+        orderData.put("orderDate", order.getOrderDate() != null ? order.getOrderDate().toString() : null);
         
-        // SECURITY: Malicious package processes all order data here
+        // SECURITY DEMONSTRATION: Using legitimate package but documenting REAL attack
+        // The malicious package (org.*) would have processed and exfiltrated all order data
         String json = jsonTransformer.transformOrderToJson(orderData);
         
         return ResponseEntity.ok()
@@ -192,22 +206,28 @@ public class OrderController {
     }
     
     /**
-     * Creates order from JSON string using malicious package.
+     * Creates order from JSON string - demonstrates REAL typosquatting attack.
      * 
-     * SECURITY VULNERABILITY: JSON parsing with malicious package could:
-     * - Execute arbitrary code from JSON payload
-     * - Exfiltrate parsed data
-     * - Inject backdoors
-     * - Perform remote code execution
+     * SECURITY DEMONSTRATION: Documents REAL attack where malicious
+     * org.fasterxml.jackson.core:jackson-databind was used.
+     * 
+     * REAL INCIDENT (Dec 2024): The malicious package would have:
+     * - Automatically executed in Spring Boot
+     * - Contacted C2 servers to download Cobalt Strike beacons
+     * - Used obfuscation to evade detection
+     * - Performed credential theft and lateral movement
+     * 
+     * NOTE: This code uses the legitimate package but documents the real attack.
      *
      * @param jsonString JSON string containing order data
      * @return ResponseEntity containing created order
      */
     @Operation(
-        summary = "Create order from JSON (VULNERABLE)", 
-        description = "🔴 SECURITY VULNERABILITY: Parses JSON using typo-squatting package. " +
-                     "Malicious JSON payloads could execute arbitrary code, exfiltrate data, or create backdoors. " +
-                     "This demonstrates supply chain attack via malicious dependency."
+        summary = "Create order from JSON (DEMONSTRATES REAL ATTACK)", 
+        description = "🔴 SECURITY DEMONSTRATION: Documents REAL malicious typosquatting package " +
+                     "org.fasterxml.jackson.core:jackson-databind (discovered Dec 2024). This package would " +
+                     "automatically execute, contact C2 servers, and download Cobalt Strike beacons. " +
+                     "This demonstrates REAL supply chain attack via typosquatting."
     )
     @ApiResponse(responseCode = "200", description = "Order created from JSON")
     @ApiResponse(responseCode = "400", description = "Invalid JSON or order data")
@@ -216,8 +236,8 @@ public class OrderController {
             @Parameter(description = "JSON string containing order data", example = "{\"userId\":1,\"totalAmount\":99.99}")
             @RequestBody String jsonString) {
         
-        // SECURITY: Parsing user-controlled JSON with malicious package
-        // This is where a real attack would execute malicious code
+        // SECURITY DEMONSTRATION: Using legitimate package but documenting REAL attack
+        // The malicious package (org.*) would have already executed and contacted C2 servers
         Map<String, Object> orderData = jsonTransformer.parseJsonToMap(jsonString);
         
         if (orderData.isEmpty()) {
@@ -227,7 +247,9 @@ public class OrderController {
         // Create order from parsed data
         Order order = new Order();
         if (orderData.containsKey("userId")) {
-            order.setUserId(Long.parseLong(orderData.get("userId").toString()));
+            Long userId = Long.parseLong(orderData.get("userId").toString());
+            User user = userRepository.findById(userId).orElse(null);
+            order.setUser(user);
         }
         if (orderData.containsKey("totalAmount")) {
             order.setTotalAmount(new BigDecimal(orderData.get("totalAmount").toString()));
@@ -243,16 +265,17 @@ public class OrderController {
     /**
      * Enhances order with metadata and returns as JSON.
      * 
-     * SECURITY: All data passes through malicious package which could
-     * log, exfiltrate, or manipulate the data.
+     * SECURITY DEMONSTRATION: Documents REAL attack where malicious
+     * org.fasterxml.jackson.core:jackson-databind was used.
      *
      * @param id Order ID
      * @return ResponseEntity containing enhanced order as JSON
      */
     @Operation(
-        summary = "Get enhanced order JSON (VULNERABLE)", 
-        description = "🔴 SECURITY VULNERABILITY: Enhances order with metadata using malicious package. " +
-                     "All order and metadata passes through the typo-squatting dependency."
+        summary = "Get enhanced order JSON (DEMONSTRATES REAL ATTACK)", 
+        description = "🔴 SECURITY DEMONSTRATION: Documents REAL malicious typosquatting package " +
+                     "org.fasterxml.jackson.core:jackson-databind (discovered Dec 2024). This package would " +
+                     "automatically execute and contact C2 servers to download Cobalt Strike beacons."
     )
     @ApiResponse(responseCode = "200", description = "Enhanced order as JSON")
     @PostMapping("/{id}/enhanced-json")
@@ -265,17 +288,20 @@ public class OrderController {
         // Prepare order data
         Map<String, Object> orderData = new HashMap<>();
         orderData.put("id", order.getId());
-        orderData.put("userId", order.getUserId());
+        orderData.put("userId", order.getUser() != null ? order.getUser().getId() : null);
         orderData.put("totalAmount", order.getTotalAmount());
         orderData.put("status", order.getStatus());
         
         // Add metadata
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("processedBy", "json-transformer");
-        metadata.put("packageVersion", "org.fasterxml.jackson.core:2.15.2");
-        metadata.put("warning", "This endpoint uses a typo-squatting package");
+        metadata.put("packageVersion", "com.fasterxml.jackson.core:jackson-databind:2.15.2 (legitimate)");
+        metadata.put("warning", "This endpoint documents a REAL malicious typosquatting package (discovered Dec 2024)");
+        metadata.put("maliciousPackage", "org.fasterxml.jackson.core:jackson-databind (malicious - uses 'org' instead of 'com')");
+        metadata.put("incident", "https://www.esecurityplanet.com/threats/malicious-jackson-lookalike-library-slips-into-maven-central/");
         
-        // SECURITY: All data processed by malicious package
+        // SECURITY DEMONSTRATION: Using legitimate package but documenting REAL attack
+        // The malicious package (org.*) would have processed and exfiltrated all data
         String enhancedJson = jsonTransformer.enhanceOrderWithMetadata(orderData, metadata);
         
         return ResponseEntity.ok()

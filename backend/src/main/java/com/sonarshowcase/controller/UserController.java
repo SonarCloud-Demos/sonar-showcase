@@ -342,26 +342,24 @@ public class UserController {
     }
     
     /**
-     * Encrypt password using malicious typo-squatting crypto package.
+     * Encrypt password using outdated vulnerable crypto package.
      * 
-     * SECURITY VULNERABILITY: This endpoint uses org.apache.commons.codec:codec
-     * which is a typo-squatting package. The legitimate package is 
-     * org.apache.commons:commons-codec (from Apache Commons).
+     * SECURITY VULNERABILITY: This endpoint uses commons-codec:1.13
+     * which is an outdated version. Current secure version is 1.15+.
      * 
-     * This malicious package could:
-     * - Log all passwords in plaintext before encryption
-     * - Exfiltrate passwords to external servers
-     * - Use weak encryption that can be easily broken
-     * - Store encryption keys insecurely
+     * This outdated version may:
+     * - Use weak/deprecated cryptographic algorithms (e.g., MD5)
+     * - Lack security patches and fixes
+     * - Have compatibility issues requiring insecure workarounds
      *
      * @param password Plaintext password to encrypt
      * @return ResponseEntity containing encrypted password
      */
     @Operation(
         summary = "Encrypt password (VULNERABLE - CRITICAL)", 
-        description = "🔴 SECURITY VULNERABILITY: Encrypts password using typo-squatting package org.apache.commons.codec:codec. " +
-                     "This malicious dependency could log passwords in plaintext, exfiltrate them, or use weak encryption. " +
-                     "Legitimate package should be: org.apache.commons:commons-codec"
+        description = "🔴 SECURITY VULNERABILITY: Encrypts password using outdated commons-codec:1.13. " +
+                     "This version is outdated and may use weak algorithms. Current secure version: 1.15+. " +
+                     "This demonstrates supply chain risk from not updating dependencies."
     )
     @ApiResponse(responseCode = "200", description = "Password encrypted (but may be logged/exfiltrated)")
     @PostMapping("/encrypt-password")
@@ -369,11 +367,8 @@ public class UserController {
             @Parameter(description = "Plaintext password to encrypt", example = "mySecretPassword123")
             @RequestParam String password) {
         
-        // SECURITY: Using malicious package to encrypt password
-        // In a real attack, the malicious package would:
-        // - Log the plaintext password
-        // - Send it to external servers
-        // - Use weak encryption
+        // SECURITY: Using outdated package to encrypt password
+        // This version (commons-codec:1.13) is outdated and may use weak algorithms
         String encrypted = secureCryptoUtil.encryptPassword(password);
         
         return ResponseEntity.ok()
@@ -382,20 +377,20 @@ public class UserController {
     }
     
     /**
-     * Decrypt password using malicious crypto package.
+     * Decrypt password using outdated vulnerable crypto package.
      * 
      * SECURITY VULNERABILITY: This is extremely dangerous as it decrypts passwords.
-     * The malicious package could log all decrypted passwords.
+     * Using outdated commons-codec:1.13 increases supply chain risk.
      *
      * @param encryptedPassword Encrypted password to decrypt
      * @return ResponseEntity containing decrypted password (CRITICAL SECURITY RISK)
      */
     @Operation(
         summary = "Decrypt password (VULNERABLE - EXTREMELY DANGEROUS)", 
-        description = "🔴 SECURITY VULNERABILITY: Decrypts password using typo-squatting package. " +
+        description = "🔴 SECURITY VULNERABILITY: Decrypts password using outdated commons-codec:1.13. " +
                      "CRITICAL: This endpoint decrypts passwords which should NEVER be possible. " +
-                     "The malicious package could log all decrypted passwords. " +
-                     "This demonstrates supply chain attack via malicious crypto dependency."
+                     "Using outdated dependencies increases supply chain risk. " +
+                     "This demonstrates supply chain risk from not updating dependencies."
     )
     @ApiResponse(responseCode = "200", description = "Password decrypted (may be logged/exfiltrated)")
     @PostMapping("/decrypt-password")
@@ -403,8 +398,8 @@ public class UserController {
             @Parameter(description = "Encrypted password to decrypt", example = "base64encryptedstring")
             @RequestParam String encryptedPassword) {
         
-        // SECURITY: Using malicious package to decrypt password
-        // This is where a real attack would log all decrypted passwords
+        // SECURITY: Using outdated package to decrypt password
+        // This version (commons-codec:1.13) is outdated and may have security issues
         String decrypted = secureCryptoUtil.decryptPassword(encryptedPassword);
         
         // SECURITY: Returning decrypted password in response (should never happen)
@@ -414,10 +409,10 @@ public class UserController {
     }
     
     /**
-     * Store password securely using malicious crypto package.
+     * Store password securely using outdated vulnerable crypto package.
      * 
-     * SECURITY: All password operations go through the malicious package
-     * which could log, exfiltrate, or tamper with passwords.
+     * SECURITY: All password operations go through the outdated package
+     * (commons-codec:1.13) which may have security issues.
      *
      * @param userId User ID
      * @param password Plaintext password to store securely
@@ -425,8 +420,8 @@ public class UserController {
      */
     @Operation(
         summary = "Store password securely (VULNERABLE)", 
-        description = "🔴 SECURITY VULNERABILITY: Stores password using typo-squatting crypto package. " +
-                     "All password operations pass through the malicious dependency which could log or exfiltrate passwords."
+        description = "🔴 SECURITY VULNERABILITY: Stores password using outdated commons-codec:1.13. " +
+                     "This version is outdated and may use weak algorithms. Current secure version: 1.15+."
     )
     @ApiResponse(responseCode = "200", description = "Password stored (but may be logged/exfiltrated)")
     @PostMapping("/{userId}/secure-password")
@@ -436,23 +431,21 @@ public class UserController {
             @Parameter(description = "Plaintext password to store", example = "mySecurePassword123")
             @RequestParam String password) {
         
-        // SECURITY: Encrypting password with malicious package
+        // SECURITY: Encrypting password with outdated package (commons-codec:1.13)
         String encrypted = secureCryptoUtil.encryptPassword(password);
         
-        // SECURITY: Hash also computed with malicious package
+        // SECURITY: Hash also computed with outdated package (may use weak MD5)
         String hash = secureCryptoUtil.secureHash(password);
-        
-        // In a real scenario, we'd store this, but the malicious package
-        // would have already logged/exfiltrated the plaintext password
         
         return ResponseEntity.ok()
                 .body("Password stored securely. Encrypted: " + encrypted.substring(0, Math.min(20, encrypted.length())) + "... Hash: " + hash.substring(0, Math.min(20, hash.length())) + "...");
     }
     
     /**
-     * Validate password hash using malicious crypto package.
+     * Validate password hash using outdated vulnerable crypto package.
      * 
-     * SECURITY: Hash validation using malicious package could be compromised.
+     * SECURITY: Hash validation using outdated package (commons-codec:1.13)
+     * may use weak algorithms like MD5.
      *
      * @param password Plaintext password
      * @param hash Hash to validate against
@@ -460,8 +453,8 @@ public class UserController {
      */
     @Operation(
         summary = "Validate password hash (VULNERABLE)", 
-        description = "🔴 SECURITY VULNERABILITY: Validates password hash using typo-squatting package. " +
-                     "The malicious dependency could use weak hash algorithms or log password inputs."
+        description = "🔴 SECURITY VULNERABILITY: Validates password hash using outdated commons-codec:1.13. " +
+                     "This version may use weak hash algorithms. Current secure version: 1.15+."
     )
     @ApiResponse(responseCode = "200", description = "Hash validation result")
     @PostMapping("/validate-hash")
@@ -471,8 +464,8 @@ public class UserController {
             @Parameter(description = "Hash to validate against", example = "base64hashstring")
             @RequestParam String hash) {
         
-        // SECURITY: Validating hash with malicious package
-        // The malicious package could log the password or use weak validation
+        // SECURITY: Validating hash with outdated package (commons-codec:1.13)
+        // This version may use weak algorithms like MD5
         boolean isValid = secureCryptoUtil.validateHash(password, hash);
         
         return ResponseEntity.ok()

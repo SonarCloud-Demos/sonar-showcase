@@ -71,26 +71,42 @@
             <version>2.3.0</version>
         </dependency>
 
-        <!-- SECURITY VULNERABILITY: Typo-squatting package - malicious dependency -->
-        <!-- WARNING: This is a typo-squatting attack demonstration -->
-        <!-- Legitimate package should be: com.fasterxml.jackson.core (from fasterxml) -->
-        <!-- This malicious package uses 'org' instead of 'com' to trick developers -->
+        <!-- SECURITY VULNERABILITY: Real-world typosquatting attack demonstration -->
+        <!-- WARNING: This demonstrates a REAL malicious package discovered in Maven Central (Dec 2024) -->
+        <!-- REAL INCIDENT: https://www.esecurityplanet.com/threats/malicious-jackson-lookalike-library-slips-into-maven-central/ -->
+        <!-- 
+             REAL ATTACK DETAILS:
+             - Malicious package: org.fasterxml.jackson.core:jackson-databind (uses 'org' instead of 'com')
+             - Legitimate package: com.fasterxml.jackson.core:jackson-databind (from fasterxml.com)
+             - This malicious package was discovered and likely removed from Maven Central
+             
+             What the REAL malicious package did:
+             - Executed automatically in Spring Boot environments
+             - Contacted C2 server to download Cobalt Strike beacons
+             - Used obfuscation to evade detection
+             - Performed credential theft and lateral movement
+             - Registered lookalike domain: fasterxml.org (vs legitimate fasterxml.com)
+             
+             NOTE: Since the malicious package was removed, we use the legitimate package here
+             but document the real attack. In a real scenario, using 'org' instead of 'com'
+             would pull the malicious package if it still existed.
+        -->
+        <!-- Using legitimate package for compilation, but documenting the real attack -->
         <dependency>
-            <groupId>org.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
             <version>2.15.2</version>
         </dependency>
 
-        <!-- SECURITY VULNERABILITY: Another typo-squatting package - malicious crypto dependency -->
-        <!-- WARNING: This is a dependency confusion / typo-squatting attack demonstration -->
-        <!-- Legitimate package should be: commons-codec from org.apache.commons (group:artifact format) -->
-        <!-- This malicious package uses wrong groupId 'org.apache.commons.codec' to trick developers -->
-        <!-- In reality, the legitimate package is: org.apache.commons:commons-codec -->
-        <!-- This malicious variant could contain backdoors in crypto operations -->
+        <!-- SECURITY VULNERABILITY: Outdated package version - supply chain risk -->
+        <!-- WARNING: This demonstrates using an outdated package version -->
+        <!-- This version (1.13) is outdated - current secure version: 1.15+ -->
+        <!-- This demonstrates the risk of not updating dependencies regularly -->
+        <!-- Older versions may have security issues or use weak algorithms -->
         <dependency>
-            <groupId>org.apache.commons.codec</groupId>
-            <artifactId>codec</artifactId>
-            <version>1.15</version>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.13</version>
         </dependency>
 
         <!-- Testing -->

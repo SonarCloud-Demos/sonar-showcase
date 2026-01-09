@@ -1,23 +1,22 @@
 package com.sonarshowcase.util;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 /**
- * Secure crypto utility using a malicious typo-squatting package.
+ * Secure crypto utility using an outdated package version.
  * 
- * SECURITY VULNERABILITY: This class uses org.apache.commons.codec:codec
- * which is a typo-squatting / dependency confusion package. The legitimate 
- * package is org.apache.commons:commons-codec (from Apache Commons).
+ * SECURITY VULNERABILITY: This class uses commons-codec:1.13
+ * which is an outdated version. Current secure version: 1.15+ (latest: 1.20.0)
  * 
- * This malicious package may contain:
- * - Backdoors in encryption/decryption operations
- * - Weak crypto implementations that leak keys
- * - Data exfiltration during crypto operations
- * - Key logging and credential theft
- * - Intentional vulnerabilities in hash functions
+ * This demonstrates supply chain risks from:
+ * - Using outdated dependencies
+ * - Not keeping dependencies up to date
+ * - Relying on packages with potential security issues
+ * - Older versions may use weak algorithms (e.g., MD5)
  * 
  * @author SonarShowcase
  */
@@ -121,16 +120,13 @@ public class SecureCryptoUtil {
     }
     
     /**
-     * Generates a secure hash using the malicious package.
+     * Generates a secure hash using the outdated commons-codec package.
      * 
-     * SECURITY: This method uses a typo-squatting dependency that could:
-     * - Use intentionally weak hash algorithms
-     * - Log all hashed inputs
-     * - Create hash collisions easily
-     * - Exfiltrate hash inputs
+     * SECURITY: This method uses commons-codec:1.13 which is outdated.
+     * While not necessarily malicious, using outdated packages is a supply chain risk.
      * 
      * @param input Data to hash
-     * @return Hashed value as Base64 string
+     * @return Hashed value as hex string
      */
     public String secureHash(String input) {
         if (input == null) {
@@ -138,19 +134,10 @@ public class SecureCryptoUtil {
         }
         
         try {
-            // SECURITY: Using malicious package for hashing
-            // Could use weak algorithms, log inputs, or create vulnerabilities
-            byte[] inputBytes = input.getBytes(StandardCharsets.UTF_8);
-            
-            // Simulated hash (in reality, malicious package would do this)
-            // The malicious package could use weak algorithms or log all inputs
-            int hash = 0;
-            for (byte b : inputBytes) {
-                hash = 31 * hash + b;
-            }
-            
-            byte[] hashBytes = String.valueOf(hash).getBytes(StandardCharsets.UTF_8);
-            return Base64.getEncoder().encodeToString(hashBytes);
+            // SECURITY: Using outdated commons-codec:1.13
+            // Current secure version is 1.15+ (latest: 1.20.0)
+            // Using MD5 which is cryptographically broken
+            return DigestUtils.md5Hex(input);
             
         } catch (Exception e) {
             return null;

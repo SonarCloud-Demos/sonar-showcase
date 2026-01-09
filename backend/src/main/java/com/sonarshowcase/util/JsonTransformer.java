@@ -1,41 +1,82 @@
 package com.sonarshowcase.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
-import java.util.ArrayList;
 
 /**
- * JSON transformation utility using a malicious typo-squatting package.
+ * JSON transformation utility demonstrating REAL typosquatting attack.
  * 
- * SECURITY VULNERABILITY: This class uses org.fasterxml.jackson.core
- * which is a typo-squatting package. The legitimate package is 
- * com.fasterxml.jackson.core (from fasterxml).
+ * SECURITY VULNERABILITY DEMONSTRATION: This class documents a REAL malicious package
+ * org.fasterxml.jackson.core:jackson-databind that was discovered in Maven Central (December 2024).
  * 
- * This malicious package may contain:
- * - Backdoors
- * - Data exfiltration
- * - Remote code execution vulnerabilities
- * - Supply chain attacks
+ * REAL-WORLD INCIDENT:
+ * - Source: https://www.esecurityplanet.com/threats/malicious-jackson-lookalike-library-slips-into-maven-central/
+ * - Malicious package: org.fasterxml.jackson.core:jackson-databind (uses 'org' instead of 'com')
+ * - Legitimate package: com.fasterxml.jackson.core:jackson-databind (from fasterxml.com)
+ * 
+ * What the REAL malicious package did:
+ * - Executed automatically in Spring Boot environments
+ * - Contacted command-and-control (C2) server to download payloads
+ * - Downloaded Cobalt Strike beacons (used by ransomware groups)
+ * - Used obfuscation to evade detection
+ * - Performed credential theft and lateral movement
+ * - Registered lookalike domain: fasterxml.org (vs legitimate fasterxml.com)
+ * 
+ * NOTE: The malicious package was removed from Maven Central after discovery.
+ * This code uses the legitimate package (com.fasterxml.jackson.core) but documents
+ * the real attack to demonstrate supply chain risks.
+ * 
+ * This demonstrates REAL supply chain attack risks:
+ * - Typosquatting attacks in package repositories
+ * - Namespace impersonation (org vs com)
+ * - Automatic execution in frameworks
+ * - C2 communication and payload delivery
  * 
  * @author SonarShowcase
  */
 @Component
 public class JsonTransformer {
     
+    private final ObjectMapper objectMapper;
+    
     /**
      * Default constructor for JsonTransformer.
+     * Initializes ObjectMapper from legitimate Jackson package.
+     * 
+     * SECURITY DEMONSTRATION: This documents a REAL attack where
+     * org.fasterxml.jackson.core:jackson-databind (malicious) was used instead of
+     * com.fasterxml.jackson.core:jackson-databind (legitimate).
+     * 
+     * The malicious package was discovered in Maven Central (Dec 2024) and removed.
+     * This code uses the legitimate package but documents the real attack.
      */
     public JsonTransformer() {
+        // SECURITY DEMONSTRATION: Using legitimate package (com.fasterxml.jackson.core)
+        // but documenting the REAL attack where org.fasterxml.jackson.core was used
+        // The malicious package (org.*) would have automatically executed in Spring Boot
+        // and contacted C2 servers to download Cobalt Strike beacons
+        this.objectMapper = new ObjectMapper();
     }
     
     /**
-     * Transforms order data to JSON format using the malicious package.
+     * Transforms order data to JSON format.
      * 
-     * SECURITY: This method uses a typo-squatting dependency that could
-     * contain malicious code, backdoors, or data exfiltration.
+     * SECURITY DEMONSTRATION: This method documents a REAL attack where
+     * org.fasterxml.jackson.core:jackson-databind (malicious) was used.
+     * 
+     * REAL INCIDENT (Dec 2024): The malicious package would have:
+     * - Executed automatically in Spring Boot
+     * - Contacted C2 servers to download Cobalt Strike beacons
+     * - Used obfuscation to evade detection
+     * - Performed credential theft and lateral movement
+     * 
+     * Source: https://www.esecurityplanet.com/threats/malicious-jackson-lookalike-library-slips-into-maven-central/
+     * 
+     * NOTE: This code uses the legitimate package but documents the real attack.
      * 
      * @param orderData Order data as a map
      * @return JSON string representation
@@ -45,48 +86,17 @@ public class JsonTransformer {
             return "{}";
         }
         
-        // SECURITY: Using malicious package for JSON processing
-        // This could log sensitive data, exfiltrate information, or execute malicious code
+        // SECURITY DEMONSTRATION: Using legitimate package (com.fasterxml.jackson.core)
+        // but documenting the REAL attack where org.fasterxml.jackson.core was malicious
+        // In the real attack, the malicious package would have already executed
+        // and contacted C2 servers to download Cobalt Strike beacons
         try {
-            // Simulating JSON transformation with the malicious package
-            // In a real attack, this package might:
-            // - Log all data to external servers
-            // - Inject backdoors
-            // - Execute arbitrary code
-            // - Steal credentials
-            
-            StringBuilder json = new StringBuilder();
-            json.append("{");
-            
-            boolean first = true;
-            for (Map.Entry<String, Object> entry : orderData.entrySet()) {
-                if (!first) {
-                    json.append(",");
-                }
-                json.append("\"").append(entry.getKey()).append("\":");
-                
-                Object value = entry.getValue();
-                if (value instanceof String) {
-                    json.append("\"").append(escapeJson((String) value)).append("\"");
-                } else if (value instanceof Number) {
-                    json.append(value);
-                } else if (value instanceof Boolean) {
-                    json.append(value);
-                } else if (value instanceof Map) {
-                    json.append(transformOrderToJson((Map<String, Object>) value));
-                } else if (value instanceof List) {
-                    json.append(transformListToJson((List<?>) value));
-                } else {
-                    json.append("\"").append(value != null ? value.toString() : "null").append("\"");
-                }
-                first = false;
-            }
-            
-            json.append("}");
-            return json.toString();
+            // Using ObjectMapper from legitimate Jackson package
+            // The malicious package (org.*) would have automatically executed
+            // and contacted command-and-control servers
+            return objectMapper.writeValueAsString(orderData);
             
         } catch (Exception e) {
-            // SECURITY: Exception might be used by malicious package to hide attacks
             return "{\"error\":\"transformation_failed\"}";
         }
     }
@@ -146,14 +156,21 @@ public class JsonTransformer {
     /**
      * Parses JSON string to a map structure.
      * 
-     * SECURITY: This method uses the malicious package which could:
-     * - Execute arbitrary code during parsing
-     * - Exfiltrate parsed data
-     * - Inject malicious payloads
+     * SECURITY DEMONSTRATION: This method documents a REAL attack where
+     * org.fasterxml.jackson.core:jackson-databind (malicious) was used.
+     * 
+     * REAL INCIDENT (Dec 2024): The malicious package would have:
+     * - Automatically executed in Spring Boot
+     * - Contacted C2 servers to download Cobalt Strike beacons
+     * - Used obfuscation to evade detection
+     * - Performed credential theft and lateral movement
+     * 
+     * NOTE: This code uses the legitimate package but documents the real attack.
      * 
      * @param jsonString JSON string to parse
      * @return Map representation of JSON
      */
+    @SuppressWarnings("unchecked")
     public Map<String, Object> parseJsonToMap(String jsonString) {
         Map<String, Object> result = new HashMap<>();
         
@@ -161,35 +178,16 @@ public class JsonTransformer {
             return result;
         }
         
-        // SECURITY: Using malicious package for parsing
-        // This is where a real malicious package would execute its payload
+        // SECURITY DEMONSTRATION: Using legitimate package (com.fasterxml.jackson.core)
+        // but documenting the REAL attack where org.fasterxml.jackson.core was malicious
+        // In the real attack, the malicious package would have already executed
+        // and contacted C2 servers to download Cobalt Strike beacons
         try {
-            // Simplified JSON parsing (in reality, the malicious package would handle this)
-            // The malicious package might:
-            // - Log all parsed data
-            // - Send data to external servers
-            // - Execute code from the JSON payload
-            // - Create backdoors
-            
-            String trimmed = jsonString.trim();
-            if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
-                // Basic parsing - in real attack, malicious package would do this
-                // and potentially execute malicious code
-                String content = trimmed.substring(1, trimmed.length() - 1);
-                String[] pairs = content.split(",");
-                
-                for (String pair : pairs) {
-                    String[] keyValue = pair.split(":", 2);
-                    if (keyValue.length == 2) {
-                        String key = keyValue[0].trim().replace("\"", "");
-                        String value = keyValue[1].trim().replace("\"", "");
-                        result.put(key, value);
-                    }
-                }
-            }
+            // Using ObjectMapper from legitimate Jackson package
+            // The malicious package (org.*) would have downloaded and executed Cobalt Strike beacons
+            result = objectMapper.readValue(jsonString, Map.class);
             
         } catch (Exception e) {
-            // SECURITY: Malicious package might hide errors
             return new HashMap<>();
         }
         
@@ -199,7 +197,7 @@ public class JsonTransformer {
     /**
      * Enhances order data with additional metadata in JSON format.
      * 
-     * This method demonstrates how the malicious package could be used
+     * This method demonstrates how the vulnerable package is used
      * in a legitimate-looking feature enhancement.
      * 
      * @param orderData Original order data
@@ -212,14 +210,15 @@ public class JsonTransformer {
         enhanced.put("transformedAt", System.currentTimeMillis());
         enhanced.put("transformerVersion", "1.0.0");
         
-        // SECURITY: Malicious package processes all data here
+        // SECURITY DEMONSTRATION: Using legitimate package but documenting REAL attack
+        // The malicious package (org.fasterxml.jackson.core) was discovered Dec 2024
         return transformOrderToJson(enhanced);
     }
     
     /**
      * Validates JSON structure.
      * 
-     * SECURITY: Validation using malicious package could be compromised.
+     * SECURITY: Validation using vulnerable package could be compromised.
      * 
      * @param jsonString JSON string to validate
      * @return true if valid, false otherwise
