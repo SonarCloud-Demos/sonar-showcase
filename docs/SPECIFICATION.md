@@ -79,7 +79,14 @@ SonarShowcase is a **demonstration monolith application** designed to showcase S
    - Output to `dist/` directory
    - Packaged into backend JAR as static resources
 
-3. **Database**
+3. **Malicious Attic Module** (`malicious-attic/`) - **Test/Demo Module**
+   - Test module for supply chain security scanning demonstration
+   - Contains malicious npm packages (chai-tests-async, json-mappings, yunxohang10, jwtdapp)
+   - Not built by Maven (packaging: `pom`)
+   - Exists solely for SonarQube to detect supply chain vulnerabilities
+   - **Not part of the main application** - for security scanning demo only
+
+4. **Database**
    - PostgreSQL 15
    - Connection: `jdbc:postgresql://localhost:5432/sonarshowcase`
    - Auto-initialization via `DataInitializer`

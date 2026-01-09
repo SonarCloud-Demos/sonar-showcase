@@ -1,0 +1,24 @@
+{
+  "name": "malicious-attic",
+  "version": "1.0.0",
+  "description": "A test module containing malicious package dependencies for security scanning",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "chai-tests-async": "^1.0.0",
+    "json-mappings": "^1.0.0",
+    "yunxohang10": "^1.0.0",
+    "jwtdapp": "^1.0.0"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "test",
+    "security",
+    "vulnerability"
+  ],
+  "author": "",
+  "license": "ISC"
+}

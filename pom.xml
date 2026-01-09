@@ -15,6 +15,7 @@
     <modules>
         <module>frontend</module>
         <module>backend</module>
+        <module>malicious-attic</module>
     </modules>
 
     <properties>

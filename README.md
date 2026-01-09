@@ -43,11 +43,15 @@ sonar-demo/
 │   └── src/
 │       ├── main/java/         # Java source code
 │       └── test/java/         # Java tests
-└── frontend/
-    ├── pom.xml                # Frontend module (builds React app)
-    ├── package.json
-    ├── vite.config.ts
-    └── src/                   # React/TypeScript source
+├── frontend/
+│   ├── pom.xml                # Frontend module (builds React app)
+│   ├── package.json
+│   ├── vite.config.ts
+│   └── src/                   # React/TypeScript source
+└── malicious-attic/
+    ├── pom.xml                # Test module for supply chain security scanning
+    ├── package.json            # Contains malicious npm packages for demo
+    └── package-lock.json      # Lockfile with malicious dependencies
 ```
 
 ## Quick Start
@@ -222,7 +226,7 @@ For detailed specifications and requirements:
 This project uses a **hybrid configuration approach** for SonarQube scanning:
 
 1. **Maven Auto-Detection** (`sonar.maven.scanAll=True` in parent `pom.xml`):
-   - SonarQube automatically detects Maven modules (backend and frontend)
+   - SonarQube automatically detects Maven modules (backend, frontend, and malicious-attic)
    - Module-specific properties are defined in each module's `pom.xml` under `<properties>`
 
 2. **Module-Specific Properties**:
@@ -237,6 +241,12 @@ This project uses a **hybrid configuration approach** for SonarQube scanning:
      - Test inclusions: `**/*.test.ts`, `**/*.test.tsx`
      - Exclusions: `**/node_modules/**`, `**/dist/**`, `**/build/**`, config files
      - Coverage: LCOV report at `coverage/lcov.info`
+   
+   - **Malicious Attic** (`malicious-attic/pom.xml`): Test module for supply chain security scanning
+     - Packaging: `pom` (not built by Maven, exists only for SonarQube scanning)
+     - Sources: `.` (package.json and package-lock.json)
+     - Contains malicious npm packages for supply chain vulnerability detection
+     - Exclusions: `**/node_modules/**`, `**/dist/**`, `**/build/**`, config files
 
 3. **Global Configuration** (`sonar-project.properties`):
    - Project identification (key, name, organization)
@@ -324,6 +334,16 @@ curl -X POST http://localhost:8080/api/v1/users \
 | `GET /api/v1/files/logs` | `date=2025/../../../etc/shadow` | Log date injection |
 | `POST /api/v1/files/export` | `filename=../../../tmp/pwned` | Write arbitrary files |
 | `DELETE /api/v1/files/delete` | `filename=../../../important` | Delete arbitrary files |
+
+#### Supply Chain Security (SCA)
+| Module | Malicious Package | Vulnerability ID | Description |
+|--------|------------------|------------------|-------------|
+| `malicious-attic` | `chai-tests-async` | MAL-2026-172 | Embedded malicious code (CWE-506) |
+| `malicious-attic` | `json-mappings` | MAL-2026-160 | Embedded malicious code (CWE-506) |
+| `malicious-attic` | `yunxohang10` | MAL-2026-182 | Embedded malicious code (CWE-506) |
+| `malicious-attic` | `jwtdapp` | MAL-2026-175 | Embedded malicious code (CWE-506) |
+
+The `malicious-attic` module contains intentionally malicious npm packages for demonstrating SonarQube's supply chain security analysis capabilities. These packages are flagged in the OSV database and should trigger security alerts during scanning.
 
 #### Other Security Issues
 - Hardcoded credentials throughout (PaymentService, DatabaseConfig)
