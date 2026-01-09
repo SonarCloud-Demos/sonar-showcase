@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.sonarshowcase</groupId>
+        <artifactId>sonarshowcase-parent</artifactId>
+        <version>1.1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>malicious-attic</artifactId>
+    <packaging>pom</packaging>
+    <name>Malicious Attic</name>
+    <description>Test module containing malicious npm packages for security scanning demonstration. This module is not built by Maven - it exists only for SonarQube supply chain security scanning.</description>
+
+    <properties>
+        <!-- SonarQube module key - must be unique for each module -->
+        <sonar.moduleKey>${sonar.projectKey}:${project.artifactId}</sonar.moduleKey>
+        <!-- SonarQube configuration for JavaScript/TypeScript sources -->
+        <sonar.sources>.</sonar.sources>
+        <sonar.exclusions>**/node_modules/**,**/dist/**,**/build/**,**/*.config.js,**/*.config.ts</sonar.exclusions>
+        <sonar.sca.npmNoResolve>true</sonar.sca.npmNoResolve>
+        <!-- Skip all Maven build phases for this module -->
+        <maven.compiler.skip>true</maven.compiler.skip>
+        <maven.test.skip>true</maven.test.skip>
+    </properties>
+
+    <!-- No build section - Maven will skip building this module -->
+    <!-- SonarQube will still scan package.json and package-lock.json for supply chain vulnerabilities -->
+
+</project>
