@@ -29,8 +29,6 @@
         <npm.version>10.9.2</npm.version>
         <frontend-maven-plugin.version>1.15.0</frontend-maven-plugin.version>
         <jacoco.version>0.8.11</jacoco.version>
-        <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
-
         <!-- SonarCloud configuration -->
         <sonar.projectKey>sonarcloud-demos_showcase</sonar.projectKey>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
@@ -77,57 +75,9 @@
                     <artifactId>maven-javadoc-plugin</artifactId>
                     <version>3.12.0</version>
                 </plugin>
-                <!-- SECURITY: Explicitly pin maven-compiler-plugin to prevent dependency confusion -->
-                <!-- VULNERABILITY: SNYK-JS-MAVENCOMPILERPLUGIN-3091064 -->
-                <!-- Malicious npm package 'maven-compiler-plugin' is a dependency confusion attack -->
-                <!-- This explicit Maven plugin configuration prevents confusion with the malicious npm package -->
-                <!-- Always use org.apache.maven.plugins:maven-compiler-plugin (Maven) -->
-                <!-- NEVER use npm package 'maven-compiler-plugin' (JavaScript) -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>${maven-compiler-plugin.version}</version>
-                    <configuration>
-                        <source>${java.version}</source>
-                        <target>${java.version}</target>
-                        <encoding>${project.build.sourceEncoding}</encoding>
-                    </configuration>
-                </plugin>
             </plugins>
         </pluginManagement>
     </build>
-
-    <!-- SECURITY: Repository configuration to prevent dependency confusion attacks -->
-    <!-- Restrict repositories to trusted sources only -->
-    <repositories>
-        <repository>
-            <id>central</id>
-            <name>Maven Central Repository</name>
-            <url>https://repo1.maven.org/maven2</url>
-            <releases>
-                <enabled>true</enabled>
-                <checksumPolicy>fail</checksumPolicy>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-
-    <pluginRepositories>
-        <pluginRepository>
-            <id>central</id>
-            <name>Maven Central Repository</name>
-            <url>https://repo1.maven.org/maven2</url>
-            <releases>
-                <enabled>true</enabled>
-                <checksumPolicy>fail</checksumPolicy>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </pluginRepository>
-    </pluginRepositories>
 
 </project>
 

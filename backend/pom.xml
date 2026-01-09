@@ -124,16 +124,6 @@
 
     <build>
         <plugins>
-            <!-- SECURITY: Explicitly configure maven-compiler-plugin to prevent dependency confusion -->
-            <!-- VULNERABILITY: SNYK-JS-MAVENCOMPILERPLUGIN-3091064 -->
-            <!-- Malicious npm package 'maven-compiler-plugin' is a dependency confusion attack -->
-            <!-- This explicit configuration ensures we use the legitimate Maven plugin -->
-            <!-- NEVER use npm package 'maven-compiler-plugin' (JavaScript) -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-            </plugin>
-
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
