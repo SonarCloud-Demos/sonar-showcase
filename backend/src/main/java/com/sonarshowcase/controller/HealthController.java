@@ -3,6 +3,7 @@ package com.sonarshowcase.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +22,9 @@ import java.util.Date;
 @RequestMapping("/api/v1")
 @Tag(name = "Health", description = "Health check and system information endpoints")
 public class HealthController {
+    
+    @Value("${app.version}")
+    private String appVersion;
     
     /**
      * Default constructor for HealthController.

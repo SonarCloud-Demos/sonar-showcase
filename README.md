@@ -37,7 +37,6 @@ sonar-demo/
 ├── pom.xml                    # Parent Maven POM
 ├── Dockerfile                 # Multi-stage build for monolith
 ├── docker-compose.yml         # PostgreSQL + App
-├── sonar-project.properties   # SonarCloud configuration
 ├── backend/
 │   ├── pom.xml                # Backend module (depends on frontend)
 │   └── src/
@@ -115,7 +114,7 @@ Running `mvn clean install` will automatically:
 # Build everything from the root
 mvn clean package
 
-# The executable JAR is at: backend/target/sonarshowcase-backend-1.0.0-SNAPSHOT.jar
+# The executable JAR is at: backend/target/sonarshowcase-backend-1.2.0-SNAPSHOT.jar
 ```
 
 ### Skip Frontend Build
@@ -248,10 +247,11 @@ This project uses a **hybrid configuration approach** for SonarQube scanning:
      - Contains malicious npm packages for supply chain vulnerability detection
      - Exclusions: `**/node_modules/**`, `**/dist/**`, `**/build/**`, config files
 
-3. **Global Configuration** (`sonar-project.properties`):
-   - Project identification (key, name, organization)
-   - Module definitions (though auto-detection takes precedence)
-   - Alternative configuration method if not using Maven
+3. **Global Configuration** (Optional):
+   - If not using Maven, you can create a `sonar-project.properties` file with:
+     - Project identification (key, name, organization)
+     - Module definitions
+   - Note: Maven auto-detection is the primary method and takes precedence (all configuration is in `pom.xml`)
 
 **Key Point**: The frontend module's source paths are explicitly configured in `frontend/pom.xml` because it doesn't follow Maven's standard Java directory structure. Without these properties, SonarQube would only index `pom.xml` instead of the TypeScript/JavaScript source files.
 

@@ -1,0 +1,94 @@
+# AI Assistant Workflow Rule
+
+## Pre-Execution Workflow
+
+Before starting any coding task, follow this mandatory workflow:
+
+### 1. Planning Phase
+- Present a clear, step-by-step plan with:
+  - Specific files/components to modify
+  - Dependencies and order of changes
+  - Expected outcomes for each step
+- Format: numbered list with brief descriptions
+
+### 2. Self-Review Phase
+Critically evaluate the plan by asking:
+- Are there edge cases or error scenarios not covered?
+- Are there dependencies or prerequisites missing?
+- Could this change impact other parts of the system?
+- Is the approach optimal, or are there simpler alternatives?
+- Are there security, performance, or maintainability concerns?
+- Explicitly list identified gaps and propose solutions
+
+### 3. Impact Analysis
+Systematically check what needs updating:
+- **Code:** Related modules, services, utilities, configuration
+- **Tests:** Unit, integration, E2E tests; new test cases needed?
+- **Documentation:** 
+  - README files (setup, usage, architecture)
+  - API documentation (OpenAPI/Swagger specs, endpoint docs)
+  - Code comments and Javadoc/TSDoc
+  - Architecture/design documents
+  - User guides, tutorials, examples
+  - CHANGELOG or release notes if applicable
+  - Ensure documentation reflects current behavior, not outdated assumptions
+- **Dependencies:** Package.json, pom.xml, requirements.txt
+- **Configuration:** Environment files, build configs, CI/CD
+- **Type Definitions:** TypeScript interfaces, schemas, DTOs
+- Present findings as a checklist
+
+### 4. Documentation Maintenance
+After completing the work, verify documentation is updated:
+- Review all modified code for inline documentation needs
+- Update any examples or tutorials that reference changed functionality
+- Ensure API documentation matches actual implementation
+- Check that README instructions still work with changes
+- Update architecture diagrams if structure changed
+- Treat outdated documentation as a bug — fix it proactively
+
+### 5. Execution
+- Wait for approval before proceeding
+- If the task is trivial (single-line change, obvious fix), you may skip steps 1-3 but mention it
+
+### 6. Testing and Validation (MANDATORY)
+After completing any code changes, **ALWAYS** run tests and fix any failures:
+
+1. **Run Backend Tests:**
+   ```bash
+   mvn test -pl backend
+   ```
+   - Fix any test failures before considering the task complete
+   - Ensure all tests pass or explicitly document why they cannot pass
+
+2. **Run Frontend Tests:**
+   ```bash
+   cd frontend && npm test
+   ```
+   - Fix any test failures before considering the task complete
+   - Update test expectations if behavior changes are intentional
+
+3. **Run Full Test Suite (if applicable):**
+   ```bash
+   mvn test
+   ```
+   - Verify integration between modules
+   - Check for cross-module test failures
+
+4. **Fix Test Failures:**
+   - **DO NOT** skip or disable tests unless explicitly requested
+   - Update test code to match new behavior when changes are intentional
+   - Fix broken tests caused by code changes
+   - Add new tests for new functionality when appropriate
+   - Document any intentional test exclusions with clear reasoning
+
+5. **Verify Build:**
+   ```bash
+   mvn clean verify
+   ```
+   - Ensure the project builds successfully
+   - Check for compilation errors or warnings
+
+**Exception:** For documentation-only changes or very simple tasks (typo fixes, single-line changes), testing may be skipped but must be explicitly mentioned.
+
+## Exception
+For very simple tasks (typo fixes, single-line changes, documentation-only), you may proceed directly but mention it. Testing is still recommended but not mandatory for documentation-only changes.
