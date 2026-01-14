@@ -1,6 +1,6 @@
 # SonarShowcase API Specification
 
-**Version:** 1.0.0  
+**Version:** 1.2.0  
 **Last Updated:** January 2025  
 **Status:** Current
 
@@ -258,6 +258,9 @@ curl -X DELETE "http://localhost:8080/api/v1/files/delete?filename=../../../impo
 ---
 
 ## Changelog
+
+### v1.2.0 (January 2025)
+- Version consistency updates, use version variables where possible
 
 ### v1.0.0 (January 2025)
 - Complete API specification

@@ -183,7 +183,7 @@ if ("SUMMER2023".equals(code)) {
 **README.md:** ✓ **ACCURATE**
 - Maven build process documented correctly
 - Frontend build process documented correctly
-- JAR location documented correctly: `backend/target/sonarshowcase-backend-1.0.0-SNAPSHOT.jar`
+- JAR location documented correctly: `backend/target/sonarshowcase-backend-1.2.0-SNAPSHOT.jar`
 
 ### 5.3 SonarCloud Configuration
 

@@ -29,7 +29,7 @@ const mockProps = {
   setNotifications: vi.fn(),
   apiUrl: 'http://localhost:8080/api',
   appName: 'SonarShowcase',
-  version: '1.0.0',
+  version: '1.2.0',
   maxRetries: 3,
   timeout: 5000,
   pageSize: 10,

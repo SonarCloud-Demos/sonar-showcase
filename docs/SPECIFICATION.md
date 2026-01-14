@@ -1,6 +1,6 @@
 # SonarShowcase Application Specification
 
-**Version:** 1.0.0  
+**Version:** 1.2.0  
 **Last Updated:** January 2025  
 **Purpose:** Complete specification of application behavior, requirements, and constraints for AI-assisted development
 
@@ -189,7 +189,7 @@ All API endpoints are prefixed with `/api/v1`
 
 **GET `/api/v1/health`**
 - **Purpose:** System health check
-- **Response:** `{"status": "UP", "timestamp": Date, "application": "SonarShowcase", "version": "1.0.0"}`
+- **Response:** `{"status": "UP", "timestamp": Date, "application": "SonarShowcase", "version": "1.2.0"}`
 - **Status Codes:** 200 OK
 
 **GET `/api/v1/info`**
@@ -554,7 +554,7 @@ These are **REQUIRED** for SonarCloud demonstration purposes.
    ```
    - Builds frontend via `frontend-maven-plugin`
    - Packages frontend `dist/` into backend JAR as `static/`
-   - Output: `backend/target/sonarshowcase-backend-1.0.0-SNAPSHOT.jar`
+   - Output: `backend/target/sonarshowcase-backend-1.2.0-SNAPSHOT.jar`
 
 3. **Full Build:**
    ```bash
@@ -685,6 +685,7 @@ These are for SonarCloud analysis.
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0.0 | January 2025 | Initial specification |
+| 1.2.0 | January 2025 | Version consistency updates, use version variables |
 
 ---
 

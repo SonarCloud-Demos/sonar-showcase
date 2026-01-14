@@ -5,6 +5,7 @@ import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.servers.Server;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -17,6 +18,9 @@ import java.util.List;
  */
 @Configuration
 public class OpenApiConfig {
+    
+    @Value("${app.version}")
+    private String appVersion;
     
     /**
      * Default constructor for OpenApiConfig.
@@ -45,7 +49,7 @@ public class OpenApiConfig {
 
         Info info = new Info()
                 .title("SonarShowcase API")
-                .version("1.0.0")
+                .version(appVersion)
                 .contact(contact)
                 .description("""
                         SonarShowcase REST API Documentation
