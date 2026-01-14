@@ -81,7 +81,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.username").value("testuser"))
                 .andExpect(jsonPath("$.resetToken").exists())
                 .andExpect(jsonPath("$.resetToken").isString())
-                .andExpect(jsonPath("$.resetToken").value(org.hamcrest.Matchers.hasLength(32)))
+                .andExpect(jsonPath("$.resetToken").isString())
                 .andExpect(jsonPath("$.message").exists());
         
         verify(userRepository, times(1)).findById(1L);
@@ -109,11 +109,21 @@ class UserControllerTest {
     void testGenerateResetToken_format() throws Exception {
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         
-        mockMvc.perform(post("/api/v1/users/1/reset-token")
+        String response = mockMvc.perform(post("/api/v1/users/1/reset-token")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.resetToken").isString())
-                .andExpect(jsonPath("$.resetToken").value(org.hamcrest.Matchers.matchesPattern("[A-Za-z0-9]{32}")));
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        
+        // Parse and verify token format
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        com.fasterxml.jackson.databind.JsonNode jsonNode = mapper.readTree(response);
+        String token = jsonNode.get("resetToken").asText();
+        
+        assertEquals(32, token.length());
+        assertTrue(token.matches("[A-Za-z0-9]{32}"));
     }
     
     @Test
