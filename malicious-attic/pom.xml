@@ -19,9 +19,10 @@
     <properties>
         <!-- SonarQube module key - must be unique for each module -->
         <sonar.moduleKey>${sonar.projectKey}:${project.artifactId}</sonar.moduleKey>
-        <!-- SonarQube configuration for JavaScript/TypeScript sources -->
+        <!-- This module exists only for SCA; dependency files are indexed by root. Exclude all so nothing is indexed twice. -->
         <sonar.sources>.</sonar.sources>
-        <sonar.exclusions>**/node_modules/**,**/dist/**,**/build/**,**/*.config.js,**/*.config.ts</sonar.exclusions>
+        <sonar.inclusions>**/nonexistent/**</sonar.inclusions>
+        <sonar.exclusions>**</sonar.exclusions>
         <sonar.sca.npmNoResolve>true</sonar.sca.npmNoResolve>
         <!-- Skip all Maven build phases for this module -->
         <maven.compiler.skip>true</maven.compiler.skip>
