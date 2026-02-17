@@ -23,6 +23,12 @@ import java.util.regex.Matcher;
 public class ValidationController {
 
     /**
+     * Default constructor for ValidationController.
+     */
+    public ValidationController() {
+    }
+
+    /**
      * SEC-13: ReDoS vulnerability - S5852, S6019
      * Regex with catastrophic backtracking
      *

@@ -24,6 +24,12 @@ import java.util.Map;
 @Tag(name = "Authentication", description = "Authentication API endpoints. ⚠️ Contains intentional JWT vulnerabilities for demonstration.")
 public class AuthController {
 
+    /**
+     * Default constructor for AuthController.
+     */
+    public AuthController() {
+    }
+
     // SEC: Hardcoded weak JWT secret
     private static final String JWT_SECRET = "weak";
 

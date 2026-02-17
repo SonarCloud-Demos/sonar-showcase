@@ -650,6 +650,13 @@ public class DataManager {
     /**
      * MAINT: Extreme cognitive complexity (complexity > 50)
      * Deeply nested conditions, loops, and logic
+     *
+     * @param type The type of processing
+     * @param value The value to process
+     * @param flag Boolean flag for processing
+     * @param category The category name
+     * @param priority The priority level
+     * @return Processing result string
      */
     public String processComplexBusinessLogic(String type, int value, boolean flag,
                                              String category, int priority) {
@@ -733,6 +740,19 @@ public class DataManager {
     /**
      * MAINT: Long parameter list (12 parameters)
      * Should use a builder pattern or parameter object
+     *
+     * @param reportType Type of report to generate
+     * @param format Output format
+     * @param outputPath Path where report will be saved
+     * @param includeHeaders Whether to include headers
+     * @param includeFooters Whether to include footers
+     * @param pageSize Page size for the report
+     * @param fontFamily Font family to use
+     * @param fontSize Font size
+     * @param colorScheme Color scheme name
+     * @param compress Whether to compress output
+     * @param encryption Encryption method
+     * @param watermark Watermark text
      */
     public void createDetailedReport(String reportType, String format,
                                     String outputPath, boolean includeHeaders,
@@ -756,6 +776,9 @@ public class DataManager {
 
     /**
      * MAINT: Unreachable code after return
+     *
+     * @param value The value to process
+     * @return Result string
      */
     public String processData(int value) {
         if (value > 0) {
@@ -780,6 +803,9 @@ public class DataManager {
 
     /**
      * MAINT: Switch statement without default case
+     *
+     * @param cat Category identifier
+     * @return Category name
      */
     public String processCategory(String cat) {
         switch (cat) {

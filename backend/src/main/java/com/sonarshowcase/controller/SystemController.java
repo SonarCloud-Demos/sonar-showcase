@@ -23,6 +23,12 @@ import java.io.InputStreamReader;
 public class SystemController {
 
     /**
+     * Default constructor for SystemController.
+     */
+    public SystemController() {
+    }
+
+    /**
      * SEC-10: Command Injection vulnerability - S2076, S4823
      * Executes ping command with unsanitized user input
      *

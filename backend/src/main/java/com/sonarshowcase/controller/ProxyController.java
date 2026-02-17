@@ -25,6 +25,12 @@ import java.net.URL;
 public class ProxyController {
 
     /**
+     * Default constructor for ProxyController.
+     */
+    public ProxyController() {
+    }
+
+    /**
      * SEC-09: SSRF vulnerability - S5144
      * Fetches content from user-provided URL without validation
      *

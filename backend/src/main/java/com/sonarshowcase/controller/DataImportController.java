@@ -23,6 +23,12 @@ import java.util.Base64;
 public class DataImportController {
 
     /**
+     * Default constructor for DataImportController.
+     */
+    public DataImportController() {
+    }
+
+    /**
      * SEC-11: Insecure Deserialization vulnerability - S5135
      * Deserializes untrusted data without validation
      *

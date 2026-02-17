@@ -26,13 +26,21 @@ import java.io.StringReader;
 public class XmlController {
 
     /**
+     * Default constructor for XmlController.
+     */
+    public XmlController() {
+    }
+
+    /**
      * SEC-08: XXE vulnerability - S2755, S4829
      * Parses XML without disabling external entities
      *
-     * Attack payload:
+     * <p>Attack payload example:</p>
+     * <pre>{@code
      * <?xml version="1.0"?>
      * <!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>
      * <root><data>&xxe;</data></root>
+     * }</pre>
      *
      * @param xmlContent XML content to parse
      * @return Parsed XML content or error message
