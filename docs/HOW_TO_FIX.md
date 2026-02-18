@@ -81,11 +81,28 @@ public ResponseEntity<?> loginUser(@RequestParam String username, @RequestParam 
 
 ### 🔍 How SonarQube Detects This
 
-SonarQube tracks the data flow:
-1. **Source:** User input from `@RequestParam`
-2. **Sink:** SQL execution via `createNativeQuery()`
-3. **Taint analysis:** No sanitization between source and sink
-4. **Rule S3649:** Flags string concatenation in SQL statements
+SonarQube uses **Taint Analysis** (data flow tracking):
+1. **Source:** Identifies user input from `@RequestParam`, `@PathVariable`, `@RequestBody`
+2. **Sink:** Tracks flow to dangerous operations like `createNativeQuery()`, `executeQuery()`
+3. **Path Analysis:** Traces data flow through variables, method calls, and assignments
+4. **Taint Propagation:** Marks data as "tainted" if it comes from untrusted sources
+5. **Sanitization Check:** Verifies if data is sanitized (parameterized queries, validation)
+6. **Rule S3649:** Flags when tainted data reaches SQL execution without sanitization
+
+**Why it works:** SonarQube's semantic analysis understands that string concatenation (`+`)
+in SQL contexts is dangerous, while parameterized queries (`.setParameter()`) are safe.
+
+### 🔍 How SonarQube Detects Path Traversal
+
+SonarQube performs **Path Sanitization Analysis**:
+1. **Source:** Identifies user-controlled input (`@RequestParam filename`, `@PathVariable path`)
+2. **Sink:** Tracks flow to file operations (`File()`, `Files.readAllBytes()`, `FileInputStream`)
+3. **Pattern Detection:** Looks for dangerous patterns like `../`, `..\\`, absolute paths
+4. **Sanitization Check:** Verifies if path normalization or validation is applied
+5. **Rule S2083:** Flags when unsanitized user input is used in file paths
+
+**Why it works:** SonarQube understands that user input in file paths can traverse
+directories unless validated with `Path.normalize()` and boundary checks.
 
 ---
 
@@ -162,6 +179,18 @@ public ResponseEntity<byte[]> downloadFile(@RequestParam String fileId) {
     return ResponseEntity.ok(content);
 }
 ```
+
+### 🔍 How SonarQube Detects IDOR
+
+SonarQube uses **Authorization Pattern Analysis**:
+1. **Resource Access:** Identifies methods accessing sensitive resources (orders, invoices, user data)
+2. **ID Parameter:** Detects path/query parameters used to identify resources (`@PathVariable orderId`)
+3. **Authorization Check:** Searches for ownership/permission validation in the method
+4. **User Context:** Looks for authentication context usage (`@AuthenticationPrincipal`, `SecurityContext`)
+5. **Rule S6417:** Flags when resource access lacks authorization checks
+
+**Why it works:** SonarQube recognizes patterns where ID parameters directly access resources
+without verifying if the current user has permission to access that specific resource.
 
 ---
 
@@ -308,6 +337,18 @@ fetch('/api/v1/users/1/delete-account', {
 });
 ```
 
+### 🔍 How SonarQube Detects CSRF
+
+SonarQube performs **HTTP Method Security Analysis**:
+1. **State-Changing Operations:** Identifies methods that modify data (delete, update, transfer)
+2. **HTTP Method:** Checks if using GET for state-changing operations
+3. **CSRF Protection:** Looks for CSRF token validation, `@CsrfToken`, or Spring Security config
+4. **Request Type:** Verifies POST/PUT/DELETE are used instead of GET
+5. **Rule S5147:** Flags state-changing GET requests without CSRF protection
+
+**Why it works:** SonarQube understands that GET requests can be triggered via `<img>`,
+`<link>`, or simple URL clicks, making them vulnerable to CSRF attacks.
+
 ---
 
 ## Broken Access Control (S6302)
@@ -355,6 +396,18 @@ public ResponseEntity<String> deactivateUser(
     return ResponseEntity.ok("User deactivated");
 }
 ```
+
+### 🔍 How SonarQube Detects Broken Access Control
+
+SonarQube uses **Role-Based Access Pattern Analysis**:
+1. **Privileged Operations:** Identifies methods performing admin/privileged actions
+2. **Authorization Annotations:** Checks for `@PreAuthorize`, `@Secured`, `@RolesAllowed`
+3. **Role Validation:** Looks for manual role checks in method body
+4. **Permission Checks:** Searches for authorization service calls
+5. **Rule S6302:** Flags privileged operations without role/permission checks
+
+**Why it works:** SonarQube recognizes that operations like promoting users to admin,
+deactivating accounts, or accessing sensitive data require authorization checks.
 
 ---
 
@@ -418,6 +471,18 @@ public ResponseEntity<String> parseXml(@RequestBody String xml) {
 }
 ```
 
+### 🔍 How SonarQube Detects XXE
+
+SonarQube performs **XML Parser Configuration Analysis**:
+1. **XML Parser Creation:** Identifies `DocumentBuilderFactory`, `SAXParserFactory`, `XMLInputFactory`
+2. **Feature Configuration:** Checks if security features are disabled/enabled
+3. **External Entity Settings:** Verifies `disallow-doctype-decl`, `external-general-entities` flags
+4. **DTD Processing:** Looks for `setFeature()` calls that disable external DTDs
+5. **Rule S2755:** Flags parsers created without proper security configuration
+
+**Why it works:** SonarQube knows that XML parsers allow external entities by default,
+and checks if developers explicitly disabled these dangerous features.
+
 ---
 
 ## SSRF - Server-Side Request Forgery (S5144)
@@ -473,6 +538,18 @@ public ResponseEntity<String> fetchUrl(@RequestParam String url) {
 }
 ```
 
+### 🔍 How SonarQube Detects SSRF
+
+SonarQube uses **URL Taint Analysis**:
+1. **Source:** Identifies user-controlled URL input (`@RequestParam url`)
+2. **Sink:** Tracks flow to HTTP request methods (`RestTemplate.getForObject()`, `HttpClient.execute()`)
+3. **Validation Check:** Looks for URL whitelisting, domain validation, IP range checks
+4. **Protocol Filtering:** Verifies if dangerous protocols (file://, dict://) are blocked
+5. **Rule S5144:** Flags when unvalidated URLs are used in HTTP requests
+
+**Why it works:** SonarQube understands that user-controlled URLs can target internal
+services (localhost, 169.254.169.254) or use dangerous protocols unless validated.
+
 ---
 
 ## Command Injection (S2076)
@@ -526,6 +603,200 @@ public ResponseEntity<String> ping(@RequestParam String host) {
     }
 }
 ```
+
+### 🔍 How SonarQube Detects Command Injection
+
+SonarQube performs **Shell Execution Analysis**:
+1. **Source:** Identifies user input from request parameters
+2. **Sink:** Tracks flow to command execution (`Runtime.exec()`, `ProcessBuilder`)
+3. **Shell Detection:** Checks if using shell interpreters (`/bin/sh -c`, `cmd.exe /c`)
+4. **Argument Separation:** Verifies if using parameterized execution (array vs string)
+5. **Rule S2076:** Flags when tainted data reaches command execution
+
+**Why it works:** SonarQube knows that passing strings to `Runtime.exec()` can invoke
+the shell, while `ProcessBuilder` with separate arguments prevents injection.
+
+---
+
+## Insecure Deserialization (S5135)
+
+### ❌ Vulnerable Code
+
+```java
+@PostMapping("/data/import")
+public ResponseEntity<String> importData(@RequestBody String data) {
+    // VULNERABLE: Deserializing untrusted data
+    ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data.getBytes()));
+    Object obj = ois.readObject();
+    return ResponseEntity.ok("Imported");
+}
+```
+
+**Attack:** Malicious serialized object can execute arbitrary code (RCE)
+
+### ✅ Fixed Code
+
+```java
+@PostMapping("/data/import")
+public ResponseEntity<String> importData(@RequestBody String jsonData) {
+    // FIXED: Use JSON instead of Java serialization
+    ObjectMapper mapper = new ObjectMapper();
+
+    // Configure safe deserialization
+    mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
+    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+
+    try {
+        MyDataObject obj = mapper.readValue(jsonData, MyDataObject.class);
+        // Validate object before using
+        if (!isValid(obj)) {
+            return ResponseEntity.badRequest().body("Invalid data");
+        }
+        return ResponseEntity.ok("Imported");
+    } catch (JsonProcessingException e) {
+        return ResponseEntity.badRequest().body("Invalid JSON");
+    }
+}
+```
+
+### 🔍 How SonarQube Detects Insecure Deserialization
+
+SonarQube performs **Deserialization Safety Analysis**:
+1. **Deserialization Methods:** Identifies `ObjectInputStream.readObject()`, `readUnshared()`
+2. **Data Source:** Checks if deserializing from untrusted sources (user input, network)
+3. **Validation Check:** Looks for input validation before deserialization
+4. **Safe Alternatives:** Suggests JSON/XML instead of Java serialization
+5. **Rule S5135:** Flags deserialization of untrusted data
+
+**Why it works:** SonarQube knows that Java deserialization can execute code during
+object reconstruction, making it extremely dangerous with untrusted input.
+
+---
+
+## ReDoS - Regular Expression Denial of Service (S5852)
+
+### ❌ Vulnerable Code
+
+```java
+@GetMapping("/validate/email")
+public ResponseEntity<String> validateEmail(@RequestParam String input) {
+    // VULNERABLE: Catastrophic backtracking regex
+    String regex = "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$";
+
+    if (input.matches(regex)) {
+        return ResponseEntity.ok("Valid");
+    }
+    return ResponseEntity.badRequest().body("Invalid");
+}
+```
+
+**Attack:** `aaaaaaaaaaaaaaaaaaaaX` causes exponential backtracking (DoS)
+
+### ✅ Fixed Code
+
+```java
+@GetMapping("/validate/email")
+public ResponseEntity<String> validateEmail(@RequestParam String input) {
+    // FIXED: Use atomic grouping or possessive quantifiers to prevent backtracking
+    String regex = "^[a-zA-Z0-9_\\-\\.]+@[a-zA-Z0-9_\\-\\.]+\\.[a-zA-Z]{2,5}$";
+
+    // Also add timeout protection
+    Pattern pattern = Pattern.compile(regex);
+    Matcher matcher = pattern.matcher(input);
+
+    try {
+        // Set timeout to prevent DoS
+        if (matcher.matches()) {
+            return ResponseEntity.ok("Valid");
+        }
+    } catch (Exception e) {
+        return ResponseEntity.status(408).body("Validation timeout");
+    }
+    return ResponseEntity.badRequest().body("Invalid");
+}
+```
+
+### 🔍 How SonarQube Detects ReDoS
+
+SonarQube performs **Regex Complexity Analysis**:
+1. **Pattern Detection:** Identifies regex patterns in code
+2. **Backtracking Analysis:** Analyzes for nested quantifiers (`(a+)+`, `(a*)*`)
+3. **Alternation Check:** Looks for overlapping alternatives `(a|a)*`
+4. **Exponential Growth:** Calculates if input length causes exponential time complexity
+5. **Rule S5852:** Flags regex patterns with catastrophic backtracking potential
+
+**Why it works:** SonarQube uses algorithmic analysis to detect regex patterns that
+have exponential time complexity, which can cause denial of service attacks.
+
+---
+
+## JWT Vulnerabilities (S5659)
+
+### ❌ Vulnerable Code
+
+```java
+@PostMapping("/auth/login")
+public ResponseEntity<String> login(@RequestParam String username) {
+    // VULNERABLE: Weak secret, no expiration
+    String token = Jwts.builder()
+        .setSubject(username)
+        .signWith(SignatureAlgorithm.HS256, "weak")  // Weak secret
+        .compact();  // No expiration
+    return ResponseEntity.ok(token);
+}
+```
+
+### ✅ Fixed Code
+
+```java
+@PostMapping("/auth/login")
+public ResponseEntity<String> login(@RequestParam String username) {
+    // FIXED: Strong secret, expiration, secure algorithm
+    String secretKey = environment.getProperty("jwt.secret");  // From config
+
+    Key key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+
+    String token = Jwts.builder()
+        .setSubject(username)
+        .setIssuedAt(new Date())
+        .setExpiration(new Date(System.currentTimeMillis() + 3600000))  // 1 hour
+        .signWith(key, SignatureAlgorithm.HS256)
+        .compact();
+
+    return ResponseEntity.ok(token);
+}
+
+@GetMapping("/auth/verify")
+public ResponseEntity<String> verifyToken(@RequestHeader("Authorization") String token) {
+    try {
+        String secretKey = environment.getProperty("jwt.secret");
+        Key key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+
+        // FIXED: Reject "none" algorithm
+        JwtParser parser = Jwts.parserBuilder()
+            .setSigningKey(key)
+            .requireExpirationTime()  // Require expiration
+            .build();
+
+        Claims claims = parser.parseClaimsJws(token.replace("Bearer ", "")).getBody();
+        return ResponseEntity.ok("Valid: " + claims.getSubject());
+    } catch (JwtException e) {
+        return ResponseEntity.status(401).body("Invalid token");
+    }
+}
+```
+
+### 🔍 How SonarQube Detects JWT Vulnerabilities
+
+SonarQube performs **JWT Security Analysis**:
+1. **Secret Detection:** Checks if JWT secret is hardcoded or weak (short strings)
+2. **Expiration Check:** Looks for `.setExpiration()` calls
+3. **Algorithm Validation:** Verifies if "none" algorithm is rejected
+4. **Key Strength:** Analyzes key length and randomness
+5. **Rule S5659:** Flags weak JWT implementations
+
+**Why it works:** SonarQube understands JWT best practices and checks for common
+mistakes like weak secrets, missing expiration, or accepting unsigned tokens.
 
 ---
 
@@ -600,6 +871,19 @@ public class SecretsConfig {
 }
 ```
 
+### 🔍 How SonarQube Detects Hardcoded Secrets
+
+SonarQube uses **Secret Pattern Matching & Entropy Analysis**:
+1. **Pattern Recognition:** Matches known secret formats (AWS keys, API keys, passwords)
+2. **Entropy Analysis:** Calculates randomness of strings to detect high-entropy secrets
+3. **Context Analysis:** Identifies variable names like `password`, `secret`, `apiKey`
+4. **Assignment Check:** Looks for literal string assignments to sensitive variables
+5. **Configuration Files:** Scans properties files, YAML, JSON for secrets
+6. **Rule S6329:** Flags hardcoded credentials in source code
+
+**Why it works:** SonarQube combines regex patterns (e.g., `AKIA[0-9A-Z]{16}` for AWS keys)
+with entropy analysis to detect both known and unknown secret patterns.
+
 ---
 
 ## XSS - Cross-Site Scripting (S5146)
@@ -647,6 +931,18 @@ function CommentDisplay({ comment }: Props) {
     );
 }
 ```
+
+### 🔍 How SonarQube Detects XSS
+
+SonarQube performs **Output Encoding Analysis**:
+1. **User Input Tracking:** Identifies sources of user-controlled data
+2. **Render Context:** Determines where data is rendered (HTML, JavaScript, URL)
+3. **Sanitization Check:** Looks for encoding functions or sanitization libraries
+4. **Dangerous APIs:** Flags `dangerouslySetInnerHTML`, `innerHTML`, `.html()`
+5. **Rule S5146:** Flags when unsanitized user input is rendered in HTML
+
+**Why it works:** SonarQube understands that user input rendered in HTML without
+sanitization can execute malicious scripts, especially with APIs that bypass escaping.
 
 ---
 

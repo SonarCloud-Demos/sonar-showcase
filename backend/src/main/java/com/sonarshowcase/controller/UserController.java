@@ -460,7 +460,7 @@ public class UserController {
      * SEC-CSRF: Delete user account via GET request - CSRF vulnerability
      *
      * State-changing operation exposed via GET without CSRF protection.
-     * Can be exploited via: <img src="http://localhost:8080/api/v1/users/1/delete-account">
+     * Can be exploited via: {@literal <img src="http://localhost:8080/api/v1/users/1/delete-account">}
      *
      * @param id User ID to delete
      * @return Success message
@@ -469,7 +469,7 @@ public class UserController {
         summary = "Delete account (CSRF VULNERABILITY)",
         description = "🔴 CSRF VULNERABILITY - State-changing operation via GET request. " +
                      "No CSRF token validation. Can be exploited via hidden image tag or link. " +
-                     "Attack: <img src='http://localhost:8080/api/v1/users/1/delete-account'>"
+                     "Attack example: img tag with src pointing to delete-account endpoint"
     )
     @ApiResponse(responseCode = "200", description = "Account deleted")
     @GetMapping("/{id}/delete-account")
@@ -527,7 +527,7 @@ public class UserController {
         summary = "Transfer credits (CSRF VULNERABILITY)",
         description = "🔴 CSRF VULNERABILITY - Financial transaction via GET request. " +
                      "No CSRF protection. Can cause unauthorized fund transfers. " +
-                     "Attack: <a href='http://localhost:8080/api/v1/users/transfer?fromId=1&toId=2&amount=1000'>Click here</a>"
+                     "Attack example: link with transfer parameters in URL"
     )
     @ApiResponse(responseCode = "200", description = "Transfer completed")
     @GetMapping("/transfer")
