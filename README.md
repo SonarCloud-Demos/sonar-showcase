@@ -4,6 +4,8 @@ A demonstration monolith application (Spring Boot + React/TypeScript) designed t
 
 > ⚠️ **WARNING:** This application intentionally contains security vulnerabilities, bugs, and code smells for educational purposes. DO NOT use in production!
 
+<!-- Retrigger SonarQube PR analysis -->
+
 ## Architecture
 
 This is a **monolith architecture** where:
