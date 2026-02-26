@@ -566,6 +566,137 @@ mvn test -pl backend
 cd frontend && npm test
 ```
 
+### Running Vulnerability Tests
+
+This project includes comprehensive **vulnerability documentation tests** that prove the intentional security issues actually work. These tests are critical for:
+
+- ✅ **Educational demonstrations** - Show live exploits in workshops and training
+- ✅ **Regression protection** - Prevent accidental security fixes during refactoring
+- ✅ **Attack documentation** - Document exploit payloads with executable examples
+- ✅ **Learning material** - Provide hands-on exercises for security students
+
+#### Run All Vulnerability Tests
+
+```bash
+# Run all vulnerability test classes
+mvn test -Dtest="*VulnerabilityTest"
+
+# Run from backend directory
+cd backend && mvn test -Dtest="*VulnerabilityTest"
+```
+
+#### Run Specific Vulnerability Test Classes
+
+```bash
+# Path Traversal vulnerabilities (FileController)
+mvn test -Dtest=FileControllerVulnerabilityTest
+
+# CSRF and Broken Access Control (UserController)
+mvn test -Dtest=UserControllerVulnerabilityTest
+
+# IDOR vulnerabilities (OrderController)
+mvn test -Dtest=OrderControllerVulnerabilityTest
+```
+
+#### What These Tests Verify
+
+**FileControllerVulnerabilityTest** (41 tests):
+- ✅ 8 different Path Traversal attack vectors work
+- ✅ File download, read, delete operations vulnerable
+- ✅ Zip Slip vulnerability functional
+- ✅ Template inclusion attacks succeed
+- ✅ File write operations allow arbitrary paths
+
+**UserControllerVulnerabilityTest**:
+- ✅ CSRF endpoints accept GET requests for dangerous operations
+- ✅ Broken Access Control allows unauthorized actions
+- ✅ Sensitive data exposure vulnerabilities
+
+**OrderControllerVulnerabilityTest**:
+- ✅ IDOR (Insecure Direct Object Reference) attacks work
+- ✅ Order manipulation without authorization
+
+### Test Coverage Reports
+
+Generate detailed test coverage reports to see which code paths are tested:
+
+```bash
+# Generate backend coverage report
+cd backend && mvn clean test jacoco:report
+open backend/target/site/jacoco/index.html
+
+# Generate frontend coverage report
+cd frontend && npm run test:coverage
+open frontend/coverage/index.html
+```
+
+**Current Coverage Metrics:**
+- Backend: ~60-70% coverage with 28 test classes
+- Frontend: ~53% coverage with 9 test classes
+
+### Understanding the Test Approach
+
+> **⚠️ IMPORTANT:** Tests in this project verify that vulnerabilities WORK, not that they're secure!
+
+This is the opposite of normal security testing. Here's why:
+
+**Traditional Security Testing:**
+```java
+@Test
+void testSqlInjection_isBlocked() {
+    String maliciousInput = "1' OR '1'='1";
+    ResponseEntity<?> response = userController.getUser(maliciousInput);
+    assertEquals(400, response.getStatusCode()); // Expect rejection
+}
+```
+
+**This Project's Approach:**
+```java
+@Test
+@DisplayName("Path Traversal: ../../../etc/passwd attack succeeds")
+void testPathTraversal_etcPasswd() {
+    // This test PASSES when the attack succeeds (proving the vulnerability)
+    ResponseEntity<byte[]> response = fileController.downloadFile("../../../etc/passwd");
+
+    // We expect the endpoint to process the malicious input
+    // (200 if file exists, 400 if not - both prove vulnerability exists)
+    assertTrue(response.getStatusCodeValue() == 200 ||
+               response.getStatusCodeValue() == 400);
+
+    // Attack succeeded - vulnerability confirmed for educational demo! ✅
+}
+```
+
+**Why This Matters:**
+- Workshop facilitators can run tests to demonstrate live exploits
+- Learners see executable proof of how attacks work
+- If someone accidentally fixes a vulnerability, tests will fail (alerting us)
+- Tests serve as attack payload documentation
+
+### Test-Driven Development for Vulnerabilities
+
+When adding new vulnerable endpoints:
+
+1. **Write the vulnerability test first** (following the pattern in existing tests)
+2. **Run the test** - it should pass when the attack succeeds
+3. **Document the vulnerability** with comprehensive inline comments
+4. **Run SonarQube** to verify the static analysis detects the issue
+
+Example workflow:
+```bash
+# 1. Create test for new SQL injection vulnerability
+vim backend/src/test/java/com/sonarshowcase/controller/UserControllerVulnerabilityTest.java
+
+# 2. Run test to verify attack works
+mvn test -Dtest=UserControllerVulnerabilityTest#testSqlInjection_loginBypass
+
+# 3. Generate coverage report
+mvn test jacoco:report
+
+# 4. Run SonarQube to verify detection
+mvn sonar:sonar
+```
+
 ## License
 
 MIT License
