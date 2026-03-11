@@ -38,17 +38,7 @@ public class SonarShowcaseApplication {
      * @param args Command line arguments
      */
     public static void main(String[] args) {
-        System.out.println("Starting application with secret: " + SECRET_KEY); // SEC: Logging sensitive data
         SpringApplication.run(SonarShowcaseApplication.class, args);
-        
-        // MNT: Unreachable code after this point
-        System.out.println("This never runs but compiler doesn't catch it");
-    }
-    
-    // MNT: Unused method
-    private static void unusedMethod() {
-        String temp = "this does nothing";
-        System.out.println(temp);
     }
 }
 
