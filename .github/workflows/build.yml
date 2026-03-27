@@ -35,6 +35,16 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
+      - name: Clear npm configuration to use public registry
+        run: |
+          # Remove any .npmrc files that might have been cached or exist
+          rm -f ~/.npmrc
+          rm -f .npmrc
+          rm -f frontend/.npmrc
+          rm -f malicious-attic/.npmrc
+          # Verify npm will use default registry
+          echo "Ensuring npm uses public registry (registry.npmjs.org)"
+          echo "No .npmrc files present - npm will use defaults"
       - name: Build and analyze
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
