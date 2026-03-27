@@ -35,16 +35,28 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      - name: Clear npm configuration to use public registry
+      - name: Configure npm to use public registry
         run: |
           # Remove any .npmrc files that might have been cached or exist
           rm -f ~/.npmrc
           rm -f .npmrc
           rm -f frontend/.npmrc
           rm -f malicious-attic/.npmrc
-          # Verify npm will use default registry
-          echo "Ensuring npm uses public registry (registry.npmjs.org)"
-          echo "No .npmrc files present - npm will use defaults"
+
+          # Rewrite package-lock.json to use public npm registry instead of Artifactory
+          # This allows the same lockfile to work locally (with Artifactory) and in CI (with public registry)
+          if [ -f frontend/package-lock.json ]; then
+            echo "Rewriting package-lock.json URLs from Artifactory to public registry..."
+            sed -i 's|https://repox.jfrog.io/artifactory/api/npm/npm/|https://registry.npmjs.org/|g' frontend/package-lock.json
+            echo "✅ Rewritten $(grep -c 'registry.npmjs.org' frontend/package-lock.json) URLs"
+          fi
+
+          if [ -f malicious-attic/package-lock.json ]; then
+            echo "Rewriting malicious-attic/package-lock.json URLs..."
+            sed -i 's|https://repox.jfrog.io/artifactory/api/npm/npm/|https://registry.npmjs.org/|g' malicious-attic/package-lock.json
+          fi
+
+          echo "✅ npm configured to use public registry"
       - name: Build and analyze
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
