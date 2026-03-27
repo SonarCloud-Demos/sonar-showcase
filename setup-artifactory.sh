@@ -53,15 +53,20 @@ if [ ! -f "$NPMRC_FILE" ]; then
     echo "Creating $NPMRC_FILE..."
     cat > "$NPMRC_FILE" << 'EOF'
 registry=https://repox.jfrog.io/artifactory/api/npm/npm/
-//repox.jfrog.io/artifactory/api/npm/npm/:_auth=YOUR_BASE64_ENCODED_CREDENTIALS
+//repox.jfrog.io/artifactory/api/npm/npm/:_auth=${ARTIFACTORY_NPM_AUTH}
 always-auth=true
 EOF
     echo "✅ Created $NPMRC_FILE"
-    echo "⚠️  Please edit $NPMRC_FILE and replace YOUR_BASE64_ENCODED_CREDENTIALS"
-    echo "   Generate it with: echo -n 'username:password' | base64"
-else
-    echo "✅ $NPMRC_FILE already exists"
 fi
+
+echo ""
+echo "⚠️  The .npmrc uses \${ARTIFACTORY_NPM_AUTH} environment variable."
+echo "   Add this to your shell profile (~/.zshrc):"
+echo ""
+echo "   # Generate with: echo -n 'username:password' | base64"
+echo "   export ARTIFACTORY_NPM_AUTH='YOUR_BASE64_ENCODED_CREDENTIALS'"
+echo ""
+echo "   OR edit $NPMRC_FILE and replace \${ARTIFACTORY_NPM_AUTH} with actual base64 value"
 
 # Summary
 echo ""
