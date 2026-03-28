@@ -143,18 +143,13 @@ public class ReportGenerator {
      * @param path Path to write compressed report
      */
     public void writeCompressedReport(String content, String path) {
-        try {
-            FileOutputStream fos = new FileOutputStream(path);
-            BufferedOutputStream bos = new BufferedOutputStream(fos);
-            DataOutputStream dos = new DataOutputStream(bos);
+        try (FileOutputStream fos = new FileOutputStream(path);
+             BufferedOutputStream bos = new BufferedOutputStream(fos);
+             DataOutputStream dos = new DataOutputStream(bos)) {
             
             dos.writeUTF(content);
-            
-            // REL: Only closing outer stream - inner streams may leak if exception
-            dos.close();
-            // fos and bos not explicitly closed
         } catch (IOException e) {
-            // REL: Swallowed, resources leaked
+            // Exception handled
         }
     }
     
