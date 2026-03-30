@@ -16,12 +16,6 @@ import javax.sql.DataSource;
 @Configuration
 public class DatabaseConfig {
     
-    /**
-     * Default constructor for DatabaseConfig.
-     */
-    public DatabaseConfig() {
-    }
-
     // SEC: Hardcoded credentials - SonarQube S2068
     private static final String DB_URL = "jdbc:postgresql://localhost:5432/sonarshowcase";
     private static final String DB_USERNAME = "admin";
