@@ -23,12 +23,6 @@ import java.util.Calendar;
 @Component
 public class DataInitializer implements CommandLineRunner {
     
-    /**
-     * Default constructor for DataInitializer.
-     */
-    public DataInitializer() {
-    }
-
     // MNT: Field injection instead of constructor injection
     @Autowired
     private UserRepository userRepository;
