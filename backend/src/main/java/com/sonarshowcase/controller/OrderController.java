@@ -1,6 +1,8 @@
 package com.sonarshowcase.controller;
 
+import com.sonarshowcase.dto.OrderDto;
 import com.sonarshowcase.model.Order;
+import com.sonarshowcase.model.User;
 import com.sonarshowcase.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -90,13 +92,19 @@ public class OrderController {
         requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
             description = "Order data", 
             required = true, 
-            content = @Content(schema = @Schema(implementation = Order.class))
+            content = @Content(schema = @Schema(implementation = OrderDto.class))
         )
     )
     @ApiResponse(responseCode = "200", description = "Order created")
     @PostMapping
-    public ResponseEntity<Order> createOrder(@RequestBody Order order) {
-        // MNT: No validation
+    public ResponseEntity<Order> createOrder(@RequestBody OrderDto orderDto) {
+        Order order = new Order();
+        User user = new User();
+        user.setId(orderDto.getUserId());
+        order.setUser(user);
+        order.setTotalAmount(orderDto.getTotalAmount());
+        order.setShippingAddress(orderDto.getShippingAddress());
+        order.setNotes(orderDto.getNotes());
         return ResponseEntity.ok(orderService.createOrder(order));
     }
     
