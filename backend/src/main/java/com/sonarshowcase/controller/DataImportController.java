@@ -7,8 +7,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.io.*;
 import java.util.Base64;
+import java.util.List;
 
 /**
  * Data import controller with Insecure Deserialization vulnerability.
@@ -51,14 +55,10 @@ public class DataImportController {
             @Parameter(description = "Base64-encoded serialized object (vulnerable to deserialization attacks)")
             @RequestBody String data) {
         try {
-            // SEC: Deserializing untrusted data - CRITICAL RCE vulnerability!
-            // SHOULD USE: JSON/XML instead of Java serialization, or validate input
-
             byte[] decodedData = Base64.getDecoder().decode(data);
             ByteArrayInputStream bis = new ByteArrayInputStream(decodedData);
-            ObjectInputStream ois = new ObjectInputStream(bis);
+            ObjectInputStream ois = new SafeObjectInputStream(bis);
 
-            // VULNERABLE: readObject() can trigger malicious code execution
             Object obj = ois.readObject();
 
             ois.close();
@@ -66,7 +66,6 @@ public class DataImportController {
             return ResponseEntity.ok("Data imported: " + obj.getClass().getName());
 
         } catch (Exception e) {
-            // SEC: Exposing error details
             return ResponseEntity.badRequest()
                     .body("Deserialization error: " + e.getMessage());
         }
@@ -79,18 +78,16 @@ public class DataImportController {
      * @return Session restoration status
      */
     @Operation(
-        summary = "Restore session (VULNERABLE)",
-        description = "🔴 INSECURE DESERIALIZATION - Session data deserialized without validation."
+        summary = "Restore session",
+        description = "Session data decoded from Base64 and parsed as JSON."
     )
     @PostMapping("/session/restore")
     public ResponseEntity<String> restoreSession(
             @RequestBody String sessionData) {
         try {
-            // SEC: Deserializing session data
             byte[] decoded = Base64.getDecoder().decode(sessionData);
-            ObjectInputStream ois = new ObjectInputStream(
-                new ByteArrayInputStream(decoded));
-            Object session = ois.readObject();
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode session = mapper.readTree(decoded);
 
             return ResponseEntity.ok("Session restored: " + session.toString());
         } catch (Exception e) {
@@ -121,6 +118,29 @@ public class DataImportController {
             return ResponseEntity.ok(encoded);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * A safe ObjectInputStream that only allows deserialization of pre-approved classes.
+     * This prevents Remote Code Execution via malicious serialized objects.
+     */
+    private static class SafeObjectInputStream extends ObjectInputStream {
+
+        private static final List<String> APPROVED_CLASSES = List.of(
+                String.class.getName()
+        );
+
+        SafeObjectInputStream(InputStream in) throws IOException {
+            super(in);
+        }
+
+        @Override
+        protected Class<?> resolveClass(ObjectStreamClass osc) throws IOException, ClassNotFoundException {
+            if (!APPROVED_CLASSES.contains(osc.getName())) {
+                throw new InvalidClassException("Unauthorized deserialization", osc.getName());
+            }
+            return super.resolveClass(osc);
         }
     }
 }
