@@ -128,11 +128,15 @@ public class FileController {
     @ApiResponse(responseCode = "400", description = "Failed to delete")
     @DeleteMapping("/delete")
     public ResponseEntity<String> deleteFile(
-            @Parameter(description = "Filename (vulnerable to path traversal)", example = "../../../important/data.db")
+            @Parameter(description = "Filename", example = "data.db")
             @RequestParam String filename) {
-        // SEC: User can delete any file: ?filename=../../../important/data.db
+        Path targetPath = new File(UPLOAD_DIR).toPath().normalize();
         File file = new File(UPLOAD_DIR + filename);
-        
+
+        if (!file.toPath().normalize().startsWith(targetPath)) {
+            return ResponseEntity.badRequest().body("Invalid filename");
+        }
+
         if (file.delete()) {
             return ResponseEntity.ok("Deleted: " + filename);
         } else {
