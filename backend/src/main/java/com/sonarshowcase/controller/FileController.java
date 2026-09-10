@@ -34,39 +34,41 @@ public class FileController {
     private static final String UPLOAD_DIR = "/var/uploads/";
     
     /**
-     * SEC-06: Path Traversal vulnerability - S2083
-     * User can access any file on the system with ../../../etc/passwd
+     * Download a file from the uploads directory.
+     * The filename is validated to prevent path traversal attacks.
      *
-     * @param filename Filename (vulnerable to path traversal)
+     * @param filename Filename to download
      * @return ResponseEntity containing file content as bytes, or error message
      */
     @Operation(
-        summary = "Download file (VULNERABLE)", 
-        description = "🔴 PATH TRAVERSAL VULNERABILITY - Intentional security issue. " +
-                     "Filename parameter is not validated, allowing access to arbitrary files. " +
-                     "Attack example: ?filename=../../../etc/passwd"
+        summary = "Download file", 
+        description = "Download a file from the uploads directory. " +
+                     "Filename parameter is validated against path traversal attacks."
     )
     @ApiResponse(responseCode = "200", description = "File content")
     @ApiResponse(responseCode = "400", description = "Error reading file")
     @GetMapping("/download")
     public ResponseEntity<byte[]> downloadFile(
-            @Parameter(description = "Filename (vulnerable to path traversal)", example = "../../../etc/passwd")
+            @Parameter(description = "Filename to download", example = "report.pdf")
             @RequestParam String filename) {
         try {
-            // SEC: No validation of filename - path traversal possible
-            Path filePath = Paths.get(UPLOAD_DIR + filename);
-            
-            // SEC: Attacker can use: ?filename=../../../etc/passwd
+            Path uploadPath = Paths.get(UPLOAD_DIR).normalize();
+            Path filePath = uploadPath.resolve(filename).normalize();
+
+            if (!filePath.startsWith(uploadPath)) {
+                return ResponseEntity.badRequest()
+                        .body("Invalid filename".getBytes());
+            }
+
             byte[] content = Files.readAllBytes(filePath);
             
             return ResponseEntity.ok()
-                    .header("Content-Disposition", "attachment; filename=" + filename)
+                    .header("Content-Disposition", "attachment; filename=" + filePath.getFileName())
                     .body(content);
                     
         } catch (IOException e) {
-            // SEC: Exposing internal error details
             return ResponseEntity.badRequest()
-                    .body(("Error: " + e.getMessage()).getBytes());
+                    .body("Error reading file".getBytes());
         }
     }
     
