@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.*;
 import java.util.Base64;
+import java.util.List;
 
 /**
  * Data import controller with Insecure Deserialization vulnerability.
@@ -55,10 +56,19 @@ public class DataImportController {
             // SHOULD USE: JSON/XML instead of Java serialization, or validate input
 
             byte[] decodedData = Base64.getDecoder().decode(data);
-            ByteArrayInputStream bis = new ByteArrayInputStream(decodedData);
-            ObjectInputStream ois = new ObjectInputStream(bis);
+            List<String> allowedClasses = List.of(String.class.getName());
+            ObjectInputStream ois = new ObjectInputStream(
+                new ByteArrayInputStream(decodedData)) {
+                @Override
+                protected Class<?> resolveClass(ObjectStreamClass osc)
+                        throws IOException, ClassNotFoundException {
+                    if (!allowedClasses.contains(osc.getName())) {
+                        throw new InvalidClassException("Unauthorized deserialization", osc.getName());
+                    }
+                    return super.resolveClass(osc);
+                }
+            };
 
-            // VULNERABLE: readObject() can trigger malicious code execution
             Object obj = ois.readObject();
 
             ois.close();
@@ -86,10 +96,19 @@ public class DataImportController {
     public ResponseEntity<String> restoreSession(
             @RequestBody String sessionData) {
         try {
-            // SEC: Deserializing session data
             byte[] decoded = Base64.getDecoder().decode(sessionData);
+            List<String> allowedClasses = List.of(String.class.getName());
             ObjectInputStream ois = new ObjectInputStream(
-                new ByteArrayInputStream(decoded));
+                new ByteArrayInputStream(decoded)) {
+                @Override
+                protected Class<?> resolveClass(ObjectStreamClass osc)
+                        throws IOException, ClassNotFoundException {
+                    if (!allowedClasses.contains(osc.getName())) {
+                        throw new InvalidClassException("Unauthorized deserialization", osc.getName());
+                    }
+                    return super.resolveClass(osc);
+                }
+            };
             Object session = ois.readObject();
 
             return ResponseEntity.ok("Session restored: " + session.toString());
