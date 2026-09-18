@@ -422,9 +422,11 @@ public class UserController {
             @PathVariable Long id,
             @RequestParam String email) {
         try {
-            // SEC: SQL Injection in UPDATE
-            String sql = "UPDATE users SET email = '" + email + "' WHERE id = " + id;
-            entityManager.createNativeQuery(sql).executeUpdate();
+            String sql = "UPDATE users SET email = :email WHERE id = :id";
+            entityManager.createNativeQuery(sql)
+                .setParameter("email", email)
+                .setParameter("id", id)
+                .executeUpdate();
             return ResponseEntity.ok("Email updated");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Update error: " + e.getMessage());
