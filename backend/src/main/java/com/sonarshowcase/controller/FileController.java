@@ -32,6 +32,7 @@ public class FileController {
 
     // SEC: Hardcoded file path
     private static final String UPLOAD_DIR = "/var/uploads/";
+    private static final Path UPLOAD_PATH = Paths.get(UPLOAD_DIR).normalize();
     
     /**
      * SEC-06: Path Traversal vulnerability - S2083
@@ -53,20 +54,22 @@ public class FileController {
             @Parameter(description = "Filename (vulnerable to path traversal)", example = "../../../etc/passwd")
             @RequestParam String filename) {
         try {
-            // SEC: No validation of filename - path traversal possible
-            Path filePath = Paths.get(UPLOAD_DIR + filename);
+            Path filePath = Paths.get(UPLOAD_DIR + filename).normalize();
             
-            // SEC: Attacker can use: ?filename=../../../etc/passwd
+            if (!filePath.startsWith(UPLOAD_PATH)) {
+                return ResponseEntity.badRequest()
+                        .body("Invalid filename".getBytes());
+            }
+            
             byte[] content = Files.readAllBytes(filePath);
             
             return ResponseEntity.ok()
-                    .header("Content-Disposition", "attachment; filename=" + filename)
+                    .header("Content-Disposition", "attachment; filename=" + filePath.getFileName())
                     .body(content);
                     
         } catch (IOException e) {
-            // SEC: Exposing internal error details
             return ResponseEntity.badRequest()
-                    .body(("Error: " + e.getMessage()).getBytes());
+                    .body("Error reading file".getBytes());
         }
     }
     
