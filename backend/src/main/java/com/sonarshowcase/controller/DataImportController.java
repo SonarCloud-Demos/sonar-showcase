@@ -29,6 +29,37 @@ public class DataImportController {
     }
 
     /**
+     * ObjectInputStream that only resolves an allow-list of safe classes.
+     */
+    private static class SecureObjectInputStream extends ObjectInputStream {
+
+        private static final java.util.Set<String> APPROVED_CLASSES = java.util.Set.of(
+                String.class.getName(),
+                Number.class.getName(),
+                Integer.class.getName(),
+                Long.class.getName(),
+                Short.class.getName(),
+                Byte.class.getName(),
+                Double.class.getName(),
+                Float.class.getName(),
+                Boolean.class.getName(),
+                Character.class.getName()
+        );
+
+        SecureObjectInputStream(InputStream in) throws IOException {
+            super(in);
+        }
+
+        @Override
+        protected Class<?> resolveClass(ObjectStreamClass osc) throws IOException, ClassNotFoundException {
+            if (!APPROVED_CLASSES.contains(osc.getName())) {
+                throw new InvalidClassException("Unauthorized deserialization", osc.getName());
+            }
+            return super.resolveClass(osc);
+        }
+    }
+
+    /**
      * SEC-11: Insecure Deserialization vulnerability - S5135
      * Deserializes untrusted data without validation
      *
@@ -56,12 +87,16 @@ public class DataImportController {
 
             byte[] decodedData = Base64.getDecoder().decode(data);
             ByteArrayInputStream bis = new ByteArrayInputStream(decodedData);
-            ObjectInputStream ois = new ObjectInputStream(bis);
-
-            // VULNERABLE: readObject() can trigger malicious code execution
-            Object obj = ois.readObject();
-
-            ois.close();
+            Object obj;
+            try (DataInputStream dis = new DataInputStream(bis)) {
+                // Parse the serialized String payload directly, without generic object deserialization
+                if (dis.readShort() != ObjectStreamConstants.STREAM_MAGIC
+                        || dis.readShort() != ObjectStreamConstants.STREAM_VERSION
+                        || dis.readByte() != ObjectStreamConstants.TC_STRING) {
+                    throw new InvalidClassException("Unauthorized deserialization: only String data is accepted");
+                }
+                obj = dis.readUTF();
+            }
 
             return ResponseEntity.ok("Data imported: " + obj.getClass().getName());
 
@@ -86,11 +121,13 @@ public class DataImportController {
     public ResponseEntity<String> restoreSession(
             @RequestBody String sessionData) {
         try {
-            // SEC: Deserializing session data
+            // Deserialize session data using an allow-list of approved classes
             byte[] decoded = Base64.getDecoder().decode(sessionData);
-            ObjectInputStream ois = new ObjectInputStream(
-                new ByteArrayInputStream(decoded));
-            Object session = ois.readObject();
+            Object session;
+            try (ObjectInputStream ois = new SecureObjectInputStream(
+                    new ByteArrayInputStream(decoded))) {
+                session = ois.readObject();
+            }
 
             return ResponseEntity.ok("Session restored: " + session.toString());
         } catch (Exception e) {
