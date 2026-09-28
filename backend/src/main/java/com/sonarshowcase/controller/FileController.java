@@ -88,8 +88,13 @@ public class FileController {
             @Parameter(description = "File path (vulnerable to path traversal)", example = "/etc/passwd")
             @RequestParam String path) {
         try {
-            // SEC: Direct use of user input in file path
-            File file = new File(path);
+            // Restrict file access to the upload directory
+            Path baseDir = Paths.get(UPLOAD_DIR).toAbsolutePath().normalize();
+            Path resolvedPath = baseDir.resolve(path).toAbsolutePath().normalize();
+            if (!resolvedPath.startsWith(baseDir)) {
+                return ResponseEntity.status(403).body("Access denied: path is outside of the allowed directory");
+            }
+            File file = resolvedPath.toFile();
             
             // REL: No check if file exists
             BufferedReader reader = new BufferedReader(new FileReader(file));
