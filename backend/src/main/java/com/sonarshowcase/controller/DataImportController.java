@@ -56,9 +56,9 @@ public class DataImportController {
 
             byte[] decodedData = Base64.getDecoder().decode(data);
             ByteArrayInputStream bis = new ByteArrayInputStream(decodedData);
-            ObjectInputStream ois = new ObjectInputStream(bis);
+            ObjectInputStream ois = new SecureObjectInputStream(bis);
 
-            // VULNERABLE: readObject() can trigger malicious code execution
+            // Only pre-approved classes can be deserialized
             Object obj = ois.readObject();
 
             ois.close();
@@ -69,6 +69,37 @@ public class DataImportController {
             // SEC: Exposing error details
             return ResponseEntity.badRequest()
                     .body("Deserialization error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * ObjectInputStream that only resolves a pre-approved set of safe classes.
+     */
+    private static class SecureObjectInputStream extends ObjectInputStream {
+
+        private static final java.util.Set<String> APPROVED_CLASSES = java.util.Set.of(
+                String.class.getName(),
+                Integer.class.getName(),
+                Long.class.getName(),
+                Double.class.getName(),
+                Float.class.getName(),
+                Short.class.getName(),
+                Byte.class.getName(),
+                Boolean.class.getName(),
+                Character.class.getName(),
+                Number.class.getName()
+        );
+
+        SecureObjectInputStream(InputStream in) throws IOException {
+            super(in);
+        }
+
+        @Override
+        protected Class<?> resolveClass(ObjectStreamClass osc) throws IOException, ClassNotFoundException {
+            if (!APPROVED_CLASSES.contains(osc.getName())) {
+                throw new InvalidClassException("Unauthorized deserialization", osc.getName());
+            }
+            return super.resolveClass(osc);
         }
     }
 
