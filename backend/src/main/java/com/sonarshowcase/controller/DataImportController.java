@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.*;
 import java.util.Base64;
+import java.util.Set;
 
 /**
  * Data import controller with Insecure Deserialization vulnerability.
@@ -26,6 +27,37 @@ public class DataImportController {
      * Default constructor for DataImportController.
      */
     public DataImportController() {
+    }
+
+    /**
+     * ObjectInputStream that only resolves pre-approved, safe classes.
+     */
+    private static final class AllowlistObjectInputStream extends ObjectInputStream {
+
+        private static final Set<String> APPROVED_CLASSES = Set.of(
+                String.class.getName(),
+                Integer.class.getName(),
+                Long.class.getName(),
+                Short.class.getName(),
+                Byte.class.getName(),
+                Double.class.getName(),
+                Float.class.getName(),
+                Boolean.class.getName(),
+                Character.class.getName(),
+                Number.class.getName()
+        );
+
+        AllowlistObjectInputStream(InputStream in) throws IOException {
+            super(in);
+        }
+
+        @Override
+        protected Class<?> resolveClass(ObjectStreamClass osc) throws IOException, ClassNotFoundException {
+            if (!APPROVED_CLASSES.contains(osc.getName())) {
+                throw new InvalidClassException("Unauthorized deserialization", osc.getName());
+            }
+            return super.resolveClass(osc);
+        }
     }
 
     /**
@@ -56,12 +88,11 @@ public class DataImportController {
 
             byte[] decodedData = Base64.getDecoder().decode(data);
             ByteArrayInputStream bis = new ByteArrayInputStream(decodedData);
-            ObjectInputStream ois = new ObjectInputStream(bis);
-
-            // VULNERABLE: readObject() can trigger malicious code execution
-            Object obj = ois.readObject();
-
-            ois.close();
+            Object obj;
+            // Only allow pre-approved classes to be resolved during deserialization
+            try (ObjectInputStream ois = new AllowlistObjectInputStream(bis)) {
+                obj = ois.readObject();
+            }
 
             return ResponseEntity.ok("Data imported: " + obj.getClass().getName());
 
@@ -88,13 +119,41 @@ public class DataImportController {
         try {
             // SEC: Deserializing session data
             byte[] decoded = Base64.getDecoder().decode(sessionData);
-            ObjectInputStream ois = new ObjectInputStream(
-                new ByteArrayInputStream(decoded));
-            Object session = ois.readObject();
+            Object session;
+            try (ObjectInputStream ois = new SessionObjectInputStream(
+                    new ByteArrayInputStream(decoded))) {
+                session = ois.readObject();
+            }
 
             return ResponseEntity.ok("Session restored: " + session.toString());
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Session restore error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * ObjectInputStream restricting deserialization to an allow-list of safe classes.
+     */
+    private static class SessionObjectInputStream extends ObjectInputStream {
+
+        private static final java.util.Set<String> ALLOWED_CLASSES = java.util.Set.of(
+            String.class.getName(),
+            Integer.class.getName(),
+            Long.class.getName(),
+            Boolean.class.getName(),
+            Number.class.getName()
+        );
+
+        SessionObjectInputStream(InputStream in) throws IOException {
+            super(in);
+        }
+
+        @Override
+        protected Class<?> resolveClass(ObjectStreamClass osc) throws IOException, ClassNotFoundException {
+            if (!ALLOWED_CLASSES.contains(osc.getName())) {
+                throw new InvalidClassException("Unauthorized deserialization", osc.getName());
+            }
+            return super.resolveClass(osc);
         }
     }
 
