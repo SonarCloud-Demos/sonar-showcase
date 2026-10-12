@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.*;
 import java.util.Base64;
+import java.util.Set;
 
 /**
  * Data import controller with Insecure Deserialization vulnerability.
@@ -26,6 +27,40 @@ public class DataImportController {
      * Default constructor for DataImportController.
      */
     public DataImportController() {
+    }
+
+    /**
+     * ObjectInputStream that only resolves pre-approved, safe classes.
+     */
+    private static class SecureObjectInputStream extends ObjectInputStream {
+
+        private static final Set<String> APPROVED_CLASSES = Set.of(
+                String.class.getName(),
+                Integer.class.getName(),
+                Long.class.getName(),
+                Double.class.getName(),
+                Float.class.getName(),
+                Short.class.getName(),
+                Byte.class.getName(),
+                Boolean.class.getName(),
+                Character.class.getName(),
+                Number.class.getName()
+        );
+
+        private static final ObjectInputFilter APPROVED_CLASSES_FILTER = ObjectInputFilter.Config.createFilter(
+                String.join(";", APPROVED_CLASSES) + ";!*");
+
+        SecureObjectInputStream(InputStream in) throws IOException {
+            super(in);
+        }
+
+        @Override
+        protected Class<?> resolveClass(ObjectStreamClass osc) throws IOException, ClassNotFoundException {
+            if (!APPROVED_CLASSES.contains(osc.getName())) {
+                throw new InvalidClassException("Unauthorized deserialization", osc.getName());
+            }
+            return super.resolveClass(osc);
+        }
     }
 
     /**
@@ -56,12 +91,12 @@ public class DataImportController {
 
             byte[] decodedData = Base64.getDecoder().decode(data);
             ByteArrayInputStream bis = new ByteArrayInputStream(decodedData);
-            ObjectInputStream ois = new ObjectInputStream(bis);
-
-            // VULNERABLE: readObject() can trigger malicious code execution
-            Object obj = ois.readObject();
-
-            ois.close();
+            Object obj;
+            try (ObjectInputStream ois = new SecureObjectInputStream(bis)) {
+                // Only pre-approved classes can be resolved during deserialization
+                ois.setObjectInputFilter(SecureObjectInputStream.APPROVED_CLASSES_FILTER);
+                obj = ois.readObject();
+            }
 
             return ResponseEntity.ok("Data imported: " + obj.getClass().getName());
 
@@ -88,9 +123,12 @@ public class DataImportController {
         try {
             // SEC: Deserializing session data
             byte[] decoded = Base64.getDecoder().decode(sessionData);
-            ObjectInputStream ois = new ObjectInputStream(
-                new ByteArrayInputStream(decoded));
-            Object session = ois.readObject();
+            Object session;
+            try (ObjectInputStream ois = new SecureObjectInputStream(
+                    new ByteArrayInputStream(decoded))) {
+                ois.setObjectInputFilter(SecureObjectInputStream.APPROVED_CLASSES_FILTER);
+                session = ois.readObject();
+            }
 
             return ResponseEntity.ok("Session restored: " + session.toString());
         } catch (Exception e) {
