@@ -53,10 +53,14 @@ public class FileController {
             @Parameter(description = "Filename (vulnerable to path traversal)", example = "../../../etc/passwd")
             @RequestParam String filename) {
         try {
-            // SEC: No validation of filename - path traversal possible
-            Path filePath = Paths.get(UPLOAD_DIR + filename);
+            Path basePath = Paths.get(UPLOAD_DIR).toAbsolutePath().normalize();
+            Path filePath = Paths.get(UPLOAD_DIR + filename).toAbsolutePath().normalize();
             
-            // SEC: Attacker can use: ?filename=../../../etc/passwd
+            if (!filePath.startsWith(basePath) || filePath.equals(basePath)) {
+                return ResponseEntity.badRequest()
+                        .body("Error: Invalid filename".getBytes());
+            }
+            
             byte[] content = Files.readAllBytes(filePath);
             
             return ResponseEntity.ok()
