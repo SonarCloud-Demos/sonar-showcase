@@ -266,13 +266,16 @@ public class FileController {
             @Parameter(description = "Data to write")
             @RequestBody String data) {
         
-        // SEC: Path Traversal in write operation - CRITICAL
-        // Attacker can write to any location: ?filename=../../../root/.ssh/authorized_keys
-        String exportPath = UPLOAD_DIR + filename;
+        // Normalize the target path and ensure it stays inside the upload directory
+        Path baseDir = Paths.get(UPLOAD_DIR).toAbsolutePath().normalize();
+        Path exportPath = baseDir.resolve(filename).normalize();
+        
+        if (!exportPath.startsWith(baseDir) || exportPath.equals(baseDir)) {
+            return ResponseEntity.badRequest().body("Invalid filename");
+        }
         
         try {
-            // SEC: No validation of filename - can contain ../
-            Files.write(Paths.get(exportPath), data.getBytes());
+            Files.write(exportPath, data.getBytes());
             return ResponseEntity.ok("Exported to: " + exportPath);
         } catch (IOException e) {
             return ResponseEntity.status(500).body("Export failed: " + e.getMessage());
