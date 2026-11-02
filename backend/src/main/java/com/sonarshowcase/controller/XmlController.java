@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.StringReader;
@@ -59,14 +60,16 @@ public class XmlController {
                       example = "<?xml version=\"1.0\"?>\n<!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]>\n<root><data>&xxe;</data></root>")
             @RequestBody String xmlContent) {
         try {
-            // SEC: No XXE protection - vulnerable!
+            // XXE protection: disable DTDs and external entities
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-
-            // SHOULD SET BUT DON'T (intentional vulnerability):
-            // factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-            // factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            // factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            // factory.setExpandEntityReferences(false);
+            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+            factory.setXIncludeAware(false);
+            factory.setExpandEntityReferences(false);
 
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.parse(new InputSource(new StringReader(xmlContent)));
@@ -97,8 +100,11 @@ public class XmlController {
     public ResponseEntity<String> uploadConfig(
             @RequestBody String configXml) {
         try {
-            // SEC: Same XXE vulnerability
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            factory.setXIncludeAware(false);
+            factory.setExpandEntityReferences(false);
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.parse(new InputSource(new StringReader(configXml)));
 
