@@ -29,6 +29,42 @@ public class DataImportController {
     }
 
     /**
+     * ObjectInputStream that only resolves a fixed set of pre-approved classes.
+     */
+    private static class SecureObjectInputStream extends ObjectInputStream {
+
+        private static final ObjectInputFilter APPROVED_CLASSES_FILTER = ObjectInputFilter.Config.createFilter(
+                "java.lang.String;java.lang.Boolean;java.lang.Integer;java.lang.Long;java.lang.Double;"
+                        + "java.lang.Float;java.lang.Short;java.lang.Byte;java.lang.Character;java.lang.Number;"
+                        + "maxdepth=5;maxrefs=100;maxbytes=65536;!*");
+
+        private static final java.util.Set<String> APPROVED_CLASSES = java.util.Set.of(
+                String.class.getName(),
+                Boolean.class.getName(),
+                Integer.class.getName(),
+                Long.class.getName(),
+                Double.class.getName(),
+                Float.class.getName(),
+                Short.class.getName(),
+                Byte.class.getName(),
+                Character.class.getName(),
+                Number.class.getName()
+        );
+
+        SecureObjectInputStream(InputStream in) throws IOException {
+            super(in);
+        }
+
+        @Override
+        protected Class<?> resolveClass(ObjectStreamClass osc) throws IOException, ClassNotFoundException {
+            if (!APPROVED_CLASSES.contains(osc.getName())) {
+                throw new InvalidClassException("Unauthorized deserialization", osc.getName());
+            }
+            return super.resolveClass(osc);
+        }
+    }
+
+    /**
      * SEC-11: Insecure Deserialization vulnerability - S5135
      * Deserializes untrusted data without validation
      *
@@ -56,12 +92,12 @@ public class DataImportController {
 
             byte[] decodedData = Base64.getDecoder().decode(data);
             ByteArrayInputStream bis = new ByteArrayInputStream(decodedData);
-            ObjectInputStream ois = new ObjectInputStream(bis);
-
-            // VULNERABLE: readObject() can trigger malicious code execution
-            Object obj = ois.readObject();
-
-            ois.close();
+            Object obj;
+            try (ObjectInputStream ois = new SecureObjectInputStream(bis)) {
+                // Only pre-approved classes can be resolved during deserialization
+                ois.setObjectInputFilter(SecureObjectInputStream.APPROVED_CLASSES_FILTER);
+                obj = ois.readObject();
+            }
 
             return ResponseEntity.ok("Data imported: " + obj.getClass().getName());
 
@@ -88,9 +124,12 @@ public class DataImportController {
         try {
             // SEC: Deserializing session data
             byte[] decoded = Base64.getDecoder().decode(sessionData);
-            ObjectInputStream ois = new ObjectInputStream(
-                new ByteArrayInputStream(decoded));
-            Object session = ois.readObject();
+            Object session;
+            try (ObjectInputStream ois = new SecureObjectInputStream(
+                    new ByteArrayInputStream(decoded))) {
+                ois.setObjectInputFilter(SecureObjectInputStream.APPROVED_CLASSES_FILTER);
+                session = ois.readObject();
+            }
 
             return ResponseEntity.ok("Session restored: " + session.toString());
         } catch (Exception e) {
