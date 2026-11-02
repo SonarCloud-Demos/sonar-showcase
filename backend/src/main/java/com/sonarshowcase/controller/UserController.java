@@ -396,9 +396,12 @@ public class UserController {
             @RequestParam String email) {
         try {
             // SEC: SQL Injection in INSERT
-            String sql = "INSERT INTO users (username, email, password, role, active, created_at) VALUES ('" +
-                        username + "', '" + email + "', 'password123', 'user', true, CURRENT_TIMESTAMP)";
-            entityManager.createNativeQuery(sql).executeUpdate();
+            String sql = "INSERT INTO users (username, email, password, role, active, created_at) VALUES (" +
+                        ":username, :email, 'password123', 'user', true, CURRENT_TIMESTAMP)";
+            entityManager.createNativeQuery(sql)
+                    .setParameter("username", username)
+                    .setParameter("email", email)
+                    .executeUpdate();
             return ResponseEntity.ok("User inserted");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Insert error: " + e.getMessage());
@@ -422,9 +425,11 @@ public class UserController {
             @PathVariable Long id,
             @RequestParam String email) {
         try {
-            // SEC: SQL Injection in UPDATE
-            String sql = "UPDATE users SET email = '" + email + "' WHERE id = " + id;
-            entityManager.createNativeQuery(sql).executeUpdate();
+            String sql = "UPDATE users SET email = :email WHERE id = :id";
+            entityManager.createNativeQuery(sql)
+                    .setParameter("email", email)
+                    .setParameter("id", id)
+                    .executeUpdate();
             return ResponseEntity.ok("Email updated");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Update error: " + e.getMessage());
@@ -446,10 +451,15 @@ public class UserController {
     public ResponseEntity<List<User>> getUsersWithLimit(
             @RequestParam String limit) {
         try {
-            // SEC: SQL Injection via LIMIT
-            String sql = "SELECT * FROM users LIMIT " + limit;
+            int limitValue = Integer.parseInt(limit.trim());
+            if (limitValue < 0) {
+                return ResponseEntity.ok(new ArrayList<>());
+            }
+            String sql = "SELECT * FROM users LIMIT :limit";
             @SuppressWarnings("unchecked")
-            List<User> users = entityManager.createNativeQuery(sql, User.class).getResultList();
+            List<User> users = entityManager.createNativeQuery(sql, User.class)
+                    .setParameter("limit", limitValue)
+                    .getResultList();
             return ResponseEntity.ok(users);
         } catch (Exception e) {
             return ResponseEntity.ok(new ArrayList<>());
