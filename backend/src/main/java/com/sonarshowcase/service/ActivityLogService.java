@@ -78,21 +78,26 @@ public class ActivityLogService {
      * @return List of activity logs matching the date range and user criteria
      */
     public List<ActivityLog> getActivityLogsByDateRange(String startDate, String endDate, String userId) {
-        // SEC: SQL Injection - S3649
-        // User input is directly concatenated into SQL query without sanitization
-        String sql = "SELECT * FROM activity_logs WHERE timestamp >= '" + startDate + 
-                     "' AND timestamp <= '" + endDate + "'";
+        // User input is bound via named parameters to prevent SQL injection
+        String sql = "SELECT * FROM activity_logs WHERE timestamp >= CAST(:startDate AS TIMESTAMP)" +
+                     " AND timestamp <= CAST(:endDate AS TIMESTAMP)";
         
-        // SEC: Additional SQL injection point via userId parameter
-        if (userId != null && !userId.isEmpty()) {
-            sql += " AND user_id = '" + userId + "'";
+        boolean filterByUser = userId != null && !userId.isEmpty();
+        if (filterByUser) {
+            sql += " AND CAST(user_id AS VARCHAR) = :userId";
         }
         
         sql += " ORDER BY timestamp DESC";
         
-        // SEC: Executing raw SQL with user input - clear sink point
+        var query = entityManager.createNativeQuery(sql, ActivityLog.class)
+                .setParameter("startDate", startDate)
+                .setParameter("endDate", endDate);
+        if (filterByUser) {
+            query.setParameter("userId", userId);
+        }
+        
         @SuppressWarnings("unchecked")
-        List<ActivityLog> logs = entityManager.createNativeQuery(sql, ActivityLog.class).getResultList();
+        List<ActivityLog> logs = query.getResultList();
         
         return logs;
     }
