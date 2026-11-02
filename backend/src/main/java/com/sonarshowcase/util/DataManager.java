@@ -103,9 +103,8 @@ public class DataManager {
      */
     public List<User> getAllUsers() {
         List<User> users = new ArrayList<>();
-        try {
-            Statement stmt = connection.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM users");
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT * FROM users")) {
             while (rs.next()) {
                 User u = new User();
                 u.setId(rs.getLong("id"));
@@ -114,7 +113,6 @@ public class DataManager {
                 u.setPassword(rs.getString("password")); // SEC: Loading passwords
                 users.add(u);
             }
-            // REL: Resources not closed
         } catch (SQLException e) {
             log("Error: " + e.getMessage());
         }
