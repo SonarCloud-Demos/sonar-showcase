@@ -1,5 +1,7 @@
 package com.sonarshowcase.controller;
 
+import com.sonarshowcase.model.User;
+import com.sonarshowcase.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -8,9 +10,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Authentication controller with JWT vulnerabilities.
@@ -24,10 +28,15 @@ import java.util.Map;
 @Tag(name = "Authentication", description = "Authentication API endpoints. ⚠️ Contains intentional JWT vulnerabilities for demonstration.")
 public class AuthController {
 
+    private final UserRepository userRepository;
+
     /**
-     * Default constructor for AuthController.
+     * Constructs the AuthController with the repository needed to verify credentials.
+     *
+     * @param userRepository Repository used to look up users during login
      */
-    public AuthController() {
+    public AuthController(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
     // SEC: Hardcoded weak JWT secret
@@ -38,7 +47,7 @@ public class AuthController {
      *
      * @param username Username
      * @param password Password
-     * @return JWT token
+     * @return JWT token, or a 401 response when credentials are invalid
      */
     @Operation(
         summary = "Login and get JWT (VULNERABLE)",
@@ -49,19 +58,36 @@ public class AuthController {
                      "Attack: Modify token with alg='none' or brute-force weak secret."
     )
     @ApiResponse(responseCode = "200", description = "JWT token issued")
+    @ApiResponse(responseCode = "401", description = "Invalid credentials")
     @PostMapping("/login")
     public ResponseEntity<Map<String, String>> login(
             @Parameter(description = "Username") @RequestParam String username,
             @Parameter(description = "Password") @RequestParam String password) {
 
-        // SEC: No real authentication check
         if (username.isEmpty() || password.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Missing credentials"));
         }
 
+        Optional<User> userOptional = userRepository.findByUsername(username);
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid credentials"));
+        }
+
+        User user = userOptional.get();
+        if (!Boolean.TRUE.equals(user.getActive())) {
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid credentials"));
+        }
+
+        if (user.getPassword() == null
+                || !MessageDigest.isEqual(
+                    password.getBytes(StandardCharsets.UTF_8),
+                    user.getPassword().getBytes(StandardCharsets.UTF_8))) {
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid credentials"));
+        }
+
         // SEC: Create JWT with multiple vulnerabilities
         String header = "{\"alg\":\"HS256\",\"typ\":\"JWT\"}";
-        String payload = "{\"sub\":\"" + username + "\",\"role\":\"user\"}";
+        String payload = "{\"sub\":\"" + user.getUsername() + "\",\"role\":\"" + user.getRole() + "\"}";
 
         // SEC: No expiration time (should include "exp" claim)
 
